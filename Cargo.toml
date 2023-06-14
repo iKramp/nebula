@@ -1,23 +1,15 @@
-[workspace]
-members = ["client", "server"]
-
 [package]
-name = "server"
+name = "fake_discord"
 version = "0.1.0"
 edition = "2018"
+
+[dependencies]
+
+
 [[bin]]
 name = "server"
 path = "server/main.rs"
 
-[dependencies]
-
-
-[package]
-name = "client"
-version = "0.1.0"
-edition = "2018"
 [[bin]]
 name = "client"
 path = "client/main.rs"
-
-[dependencies]
