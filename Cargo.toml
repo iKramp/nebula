@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
+tokio = { version = "1.28.2", features = ["full"] }
 #iced= "0.9.0"
 tokio-postgres = "0.7.8"
 
