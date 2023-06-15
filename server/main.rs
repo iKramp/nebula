@@ -1,12 +1,19 @@
 extern crate tokio_postgres;
 extern crate tokio;
 use tokio_postgres::{NoTls, Error};
+use std::env;
 
 #[tokio::main] // By default, tokio_postgres uses the tokio crate as its runtime.
 async fn main() -> Result<(), Error> {
+    let username: String;
+    if let Ok(user) = env::var("USERNAME") {
+        username = user;
+    } else {
+        panic!("could not get the username environment variable");
+    }
     // Connect to the database.
     let (client, connection) =
-        tokio_postgres::connect("host=localhost user=nejc dbname = testdb", NoTls).await?;
+        tokio_postgres::connect(format!("host=localhost user={} dbname = mydb", username).as_str(), NoTls).await?;
 
     // The connection object performs the actual communication with the database,
     // so spawn it off to run on its own.
