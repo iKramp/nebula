@@ -1,15 +1,12 @@
-use tokio_postgres::{NoTls, Error};
+use tokio_postgres::{NoTls};
 use std::env;
-use anyhow;
+use anyhow::{Ok, Error, Result};
 
 #[tokio::main] // By default, tokio_postgres uses the tokio crate as its runtime.
-async fn main() -> anyhow::Result<()> {
+async fn main() -> Result<()> {
     let username: String;
-    if let Ok(user) = env::var("USERNAME") {
-        username = user;
-    } else {
-        panic!("could not get the username environment variable");
-    }
+    username = env::var("USERNAME")?;
+
     // Connect to the database.
     let (client, connection) =
         tokio_postgres::connect(format!("host=localhost user={} dbname = mydb", username).as_str(), NoTls).await?;
