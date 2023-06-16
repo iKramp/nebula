@@ -1,10 +1,9 @@
-extern crate tokio_postgres;
-extern crate tokio;
 use tokio_postgres::{NoTls, Error};
 use std::env;
+use anyhow;
 
 #[tokio::main] // By default, tokio_postgres uses the tokio crate as its runtime.
-async fn main() -> Result<(), Error> {
+async fn main() -> anyhow::Result<()> {
     let username: String;
     if let Ok(user) = env::var("USERNAME") {
         username = user;
