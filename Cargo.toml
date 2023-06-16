@@ -10,7 +10,6 @@ iced = "0.9.0"
 tokio-postgres = "0.7.8"
 anyhow = "1.0.71"
 
-
 [[bin]]
 name = "server"
 path = "server/main.rs"
