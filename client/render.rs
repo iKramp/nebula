@@ -76,7 +76,7 @@ impl Application for Counter {
     // create a subscription that will be polled for new messages
     fn subscription(&self) -> Subscription<Message> {
         subscription::unfold(
-            "led changes",
+            "external messages",
             self.receiver.take(),
             move |mut receiver| async move {
                 let num = receiver.as_mut().unwrap().recv().await.unwrap();
