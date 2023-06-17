@@ -1,4 +1,5 @@
-use iced::widget::{button, column, text};
+use iced::widget::scrollable::{snap_to, Id, RelativeOffset};
+use iced::widget::{column, scrollable, text, Column};
 use iced::{
     subscription, window, Alignment, Application, Command, Element, Length, Result, Settings,
     Subscription,
@@ -6,22 +7,24 @@ use iced::{
 use std::cell::RefCell;
 use tokio::sync::mpsc;
 
-struct Counter {
-    value: i32,
+struct NebulaApp {
     receiver: RefCell<Option<mpsc::UnboundedReceiver<Message>>>,
+    messages: Vec<String>,
+    messages_scrollable_id: Id,
+    messages_scroll_position: f32,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 enum Message {
-    IncrementPressed,
-    DecrementPressed,
+    MessageReceived(String),
+    ScrollingMessages(f32),
 }
 
 struct Flags {
     receiver: mpsc::UnboundedReceiver<Message>,
 }
 
-impl Application for Counter {
+impl Application for NebulaApp {
     type Executor = iced::executor::Default;
     type Message = Message;
     type Theme = iced::Theme;
@@ -30,47 +33,70 @@ impl Application for Counter {
     fn new(flags: Flags) -> (Self, Command<Message>) {
         (
             Self {
-                value: 0,
                 receiver: RefCell::new(Some(flags.receiver)),
+                messages: Vec::new(),
+                messages_scrollable_id: Id::unique(),
+                messages_scroll_position: 0.0,
             },
             Command::none(),
         )
     }
 
     fn title(&self) -> String {
-        String::from("Counter - Iced")
+        String::from("Nebula")
     }
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
-            Message::IncrementPressed => {
-                self.value += 1;
+            Message::MessageReceived(msg) => {
+                self.messages.push(msg);
+                if self.messages_scroll_position > 0.999 {
+                    snap_to(
+                        self.messages_scrollable_id.clone(),
+                        RelativeOffset { y: 1.0, x: 0.0 },
+                    )
+                } else {
+                    Command::none()
+                }
             }
-            Message::DecrementPressed => {
-                self.value -= 1;
+
+            Message::ScrollingMessages(scroll) => {
+                self.messages_scroll_position = scroll;
+                Command::none()
             }
         }
-
-        Command::none()
     }
 
     fn view(&self) -> Element<Message> {
-        let column = column![
-            button("Increment")
-                .on_press(Message::IncrementPressed)
-                .padding(30),
-            text(self.value).size(50),
-            button("Decrement")
-                .on_press(Message::DecrementPressed)
-                .padding(30),
+        let messages_column: Column<Message, _> = column(
+            self.messages
+                .iter()
+                .map(|msg| text::Text::new(msg).size(20).into())
+                .collect::<Vec<Element<_>>>(),
+        );
+
+        let messages_scrollable = scrollable(messages_column)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .id(self.messages_scrollable_id.clone())
+            .on_scroll(move |scroll| Message::ScrollingMessages(scroll.y));
+
+        let chat_column: Column<_, _> = column![
+            text::Text::new("Nebula").size(50),
+            text::Text::new("Messages:").size(20),
+            messages_scrollable,
         ];
 
-        column![column.padding(50).align_items(Alignment::Center)]
-            .padding(50)
-            .align_items(Alignment::Center)
+        chat_column
+            .padding(5)
+            .align_items(Alignment::Start)
             .width(Length::Fill)
             .height(Length::Fill)
             .into()
+    }
+
+    fn theme(&self) -> Self::Theme {
+        iced::Theme::Dark
     }
 
     // create a subscription that will be polled for new messages
@@ -88,8 +114,13 @@ impl Application for Counter {
 
 async fn background_task(event_sender: mpsc::UnboundedSender<Message>) {
     loop {
-        event_sender.send(Message::IncrementPressed).unwrap();
-        tokio::time::sleep(core::time::Duration::from_secs(5)).await;
+        let random_number = rand::random::<u32>() % 100;
+        event_sender
+            .send(Message::MessageReceived(format!(
+                "I send you a random number: {random_number}"
+            )))
+            .unwrap();
+        tokio::time::sleep(core::time::Duration::from_millis(200)).await;
     }
 }
 
@@ -116,7 +147,7 @@ pub async fn start() -> Result {
         try_opengles_first: false,
     };
 
-    Counter::run(settings)?;
+    NebulaApp::run(settings)?;
 
     Ok(())
 }
