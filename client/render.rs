@@ -3,11 +3,12 @@ use iced::{
     subscription, window, Alignment, Application, Command, Element, Length, Result, Settings,
     Subscription,
 };
+use std::cell::RefCell;
 use tokio::sync::mpsc;
 
 struct Counter {
     value: i32,
-    receiver: mpsc::UnboundedReceiver<Message>,
+    receiver: RefCell<Option<mpsc::UnboundedReceiver<Message>>>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -30,7 +31,7 @@ impl Application for Counter {
         (
             Self {
                 value: 0,
-                receiver: flags.receiver,
+                receiver: RefCell::new(Some(flags.receiver)),
             },
             Command::none(),
         )
@@ -41,17 +42,6 @@ impl Application for Counter {
     }
 
     fn update(&mut self, message: Message) -> Command<Message> {
-        while let Ok(message) = self.receiver.try_recv() {
-            match message {
-                Message::IncrementPressed => {
-                    self.value += 1;
-                }
-                Message::DecrementPressed => {
-                    self.value -= 1;
-                }
-            }
-        }
-
         match message {
             Message::IncrementPressed => {
                 self.value += 1;
@@ -81,6 +71,18 @@ impl Application for Counter {
             .width(Length::Fill)
             .height(Length::Fill)
             .into()
+    }
+
+    // create a subscription that will be polled for new messages
+    fn subscription(&self) -> Subscription<Message> {
+        subscription::unfold(
+            "led changes",
+            self.receiver.take(),
+            move |mut receiver| async move {
+                let num = receiver.as_mut().unwrap().recv().await.unwrap();
+                (num, receiver)
+            },
+        )
     }
 }
 
