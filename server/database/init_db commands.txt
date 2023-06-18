@@ -1,0 +1,44 @@
+DROP INDEX IF EXISTS "channel_user_1_id_index";
+DROP INDEX IF EXISTS "channel_user_2_id_index";
+DROP INDEX IF EXISTS "message_channel_id_index";
+DROP TABLE IF EXISTS "message";
+DROP TABLE IF EXISTS "channel";
+DROP TABLE IF EXISTS "user";
+
+
+
+CREATE TABLE "user" (
+    id SERIAL PRIMARY KEY,
+    profile_photo TEXT,
+    name VARCHAR(255) UNIQUE
+);
+
+CREATE TABLE "channel" (
+    id SERIAL PRIMARY KEY,
+    user_1_id INTEGER REFERENCES "user"(id),
+    user_2_id INTEGER REFERENCES "user"(id)
+);
+
+CREATE INDEX channel_user_1_id_index ON channel(user_1_id);
+CREATE INDEX channel_user_2_id_index ON channel(user_2_id);
+
+CREATE TABLE "message" (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES "user"(id),
+    text TEXT,
+    date_created TIMESTAMP,
+    channel_id INTEGER REFERENCES channel(id)
+);
+
+CREATE INDEX message_channel_id_index ON message(channel_id);
+
+INSERT INTO "user" (id, name) VALUES (1, 'user1'), (2, 'user2');
+
+INSERT INTO "channel" (id, user_1_id, user_2_id) VALUES (1, 1, 2);
+
+INSERT INTO message (id, user_id, channel_id, text, date_created) VALUES
+(1, 1, 1, 'Random text 1', '2022-02-14 12:34:56'),
+(2, 2, 1, 'Random text 2', '2022-02-15 10:15:30'),
+(3, 1, 1, 'Random text 3', '2022-02-16 16:45:10'),
+(4, 2, 1, 'Random text 4', '2022-02-17 09:23:47'),
+(5, 1, 1, 'Random text 5', '2022-02-18 21:19:53');
