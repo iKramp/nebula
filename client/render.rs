@@ -1,8 +1,9 @@
-use iced::widget::scrollable::{snap_to, Id, RelativeOffset};
+use iced::widget::scrollable::{snap_to, RelativeOffset};
+use iced::widget::text_input::Appearance;
 use iced::widget::{column, row, scrollable, text, text_input, Column, Space};
 use iced::{
-    subscription, window, Alignment, Application, Command, Element, Length, Result, Settings,
-    Subscription,
+    executor, subscription, theme, window, Alignment, Application, Background, Color, Command,
+    Element, Length, Result, Settings, Subscription, Theme,
 };
 use std::cell::RefCell;
 use tokio::sync::mpsc;
@@ -11,7 +12,7 @@ struct NebulaApp {
     receiver: RefCell<Option<mpsc::UnboundedReceiver<Event>>>,
     sender: crossbeam_channel::Sender<Event>,
     messages: Vec<Message>,
-    messages_scrollable_id: Id,
+    messages_scrollable_id: scrollable::Id,
     messages_scroll_position: f32,
     curr_message: String,
 }
@@ -36,10 +37,50 @@ struct Flags {
     sender: crossbeam_channel::Sender<Event>,
 }
 
+struct SelectableText;
+
+impl text_input::StyleSheet for SelectableText {
+    type Style = Theme;
+
+    fn active(&self, _style: &Self::Style) -> Appearance {
+        Appearance {
+            background: Background::Color(Color::from_rgba(0.0, 0.0, 0.0, 0.0)),
+            border_radius: 0.0,
+            border_width: 0.0,
+            border_color: Color::from_rgba(0.0, 0.0, 0.0, 0.0),
+            icon_color: Color::from_rgba(0.0, 0.0, 0.0, 0.0),
+        }
+    }
+
+    fn focused(&self, style: &Self::Style) -> Appearance {
+        self.active(style)
+    }
+
+    fn placeholder_color(&self, _style: &Self::Style) -> Color {
+        Color::from_rgba(0.0, 0.0, 0.0, 0.0)
+    }
+
+    fn value_color(&self, _style: &Self::Style) -> Color {
+        Color::from_rgb(1.0, 1.0, 1.0)
+    }
+
+    fn disabled_color(&self, _style: &Self::Style) -> Color {
+        Color::from_rgba(0.0, 0.0, 0.0, 0.0)
+    }
+
+    fn selection_color(&self, _style: &Self::Style) -> Color {
+        Color::from_rgb(0.3, 0.3, 1.0)
+    }
+
+    fn disabled(&self, style: &Self::Style) -> Appearance {
+        self.active(style)
+    }
+}
+
 impl Application for NebulaApp {
-    type Executor = iced::executor::Default;
+    type Executor = executor::Default;
     type Message = Event;
-    type Theme = iced::Theme;
+    type Theme = Theme;
     type Flags = Flags;
 
     fn new(flags: Flags) -> (Self, Command<Event>) {
@@ -48,7 +89,7 @@ impl Application for NebulaApp {
                 receiver: RefCell::new(Some(flags.receiver)),
                 sender: flags.sender,
                 messages: Vec::new(),
-                messages_scrollable_id: Id::unique(),
+                messages_scrollable_id: scrollable::Id::unique(),
                 messages_scroll_position: 0.0,
                 curr_message: String::new(),
             },
@@ -107,7 +148,8 @@ impl Application for NebulaApp {
                             Space::new(Length::Fixed(5.0), Length::Fixed(0.0)),
                             text_input::TextInput::new("", &msg.message)
                                 .on_input(|_| Event::Nothing)
-                                .size(20),
+                                .size(20)
+                                .style(theme::TextInput::Custom(Box::new(SelectableText))),
                         ]
                     ]
                     .into()
@@ -139,7 +181,7 @@ impl Application for NebulaApp {
     }
 
     fn theme(&self) -> Self::Theme {
-        iced::Theme::Dark
+        Theme::Dark
     }
 
     // create a subscription that will be polled for new messages
