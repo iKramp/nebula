@@ -6,7 +6,7 @@ resolver = "2"
 
 [dependencies]
 tokio = { version = "1.28", features = ["full"] }
-iced = { version = "0.9", features = ["tokio"] }
+iced = { version = "0.9", features = [] }
 tokio-postgres = "0.7"
 anyhow = "1.0"
 rand = "0.8"
