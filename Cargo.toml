@@ -10,6 +10,7 @@ iced = "0.9"
 tokio-postgres = "0.7"
 anyhow = "1.0"
 rand = "0.8"
+crossbeam-channel = "0.5.8"
 
 [[bin]]
 name = "server"
