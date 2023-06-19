@@ -28,6 +28,7 @@ enum Event {
     MessageSent(String),
     TextInputted(String),
     ScrollingMessages(f32),
+    Nothing,
 }
 
 struct Flags {
@@ -88,6 +89,8 @@ impl Application for NebulaApp {
                 self.curr_message.clear();
                 Command::none()
             }
+
+            Event::Nothing => Command::none(),
         };
         self.sender.send(message).unwrap();
         res
@@ -102,7 +105,9 @@ impl Application for NebulaApp {
                         text::Text::new(msg.sender.clone()).size(15),
                         row![
                             Space::new(Length::Fixed(5.0), Length::Fixed(0.0)),
-                            text::Text::new(msg.message.clone()).size(20),
+                            text_input::TextInput::new("", &msg.message)
+                                .on_input(|_| Event::Nothing)
+                                .size(20),
                         ]
                     ]
                     .into()
