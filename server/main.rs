@@ -1,11 +1,18 @@
 #![allow(unused_imports)]
-use anyhow::{Error, Ok, Result};
+use anyhow::{Ok, Result};
 use std::env;
 use tokio_postgres::NoTls;
+mod database;
 
 #[tokio::main] // By default, tokio_postgres uses the tokio crate as its runtime.
 async fn main() -> Result<()> {
-    let username: String = env::var("USERNAME")?;
+    let args: Vec<String> = env::args().collect();
+    let username;
+    if let Some(arg) = args.get(1) {
+        username = arg;
+    } else {
+        anyhow::bail!("postgres username argument was not specified")
+    }
 
     // Connect to the database.
     let (client, connection) = tokio_postgres::connect(
