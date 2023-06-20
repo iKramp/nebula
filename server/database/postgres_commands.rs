@@ -1,5 +1,5 @@
 pub struct Command {
-    command: String,
+    pub command: String,
 }
 
 impl Command {
@@ -9,7 +9,7 @@ impl Command {
         }
     }
 
-    pub fn insert(columns: Vec<String>, items: Vec<Vec<String>>, table: String) -> Self {
+    pub fn insert(columns: String, items: Vec<Vec<String>>, table: String) -> Self {
         let mut elements = Vec::new();
         for item in items.into_iter() {
             elements.push(item.join(", "))
@@ -18,7 +18,7 @@ impl Command {
             command: format!(
                 "INSERT INTO {} ({}) VALUES ({})",
                 table,
-                columns.join(", "),
+                columns,
                 elements.join("), (")
             ),
         }
