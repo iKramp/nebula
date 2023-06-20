@@ -6,7 +6,7 @@ pub fn save_message(user_id: u32, channel_id: u32, text: String, date_created: u
         vec![vec![
             user_id.to_string(),
             channel_id.to_string(),
-            text,
+            format!("'{}'", text),
             date_created.to_string(),
         ]],
         "message",

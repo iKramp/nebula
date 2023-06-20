@@ -3,6 +3,7 @@ use anyhow::{Ok, Result};
 use std::env;
 use tokio_postgres::NoTls;
 mod database;
+use database::server_commands;
 
 #[tokio::main] // By default, tokio_postgres uses the tokio crate as its runtime.
 async fn main() -> Result<()> {
@@ -35,6 +36,12 @@ async fn main() -> Result<()> {
     // And then check that we got back the same string we sent over.
     let value: &str = rows[0].get(0);
     assert_eq!(value, "hello world");
+
+    let command_1 = server_commands::save_message(1, 1, "tewuibewoifhnwqe".to_owned(), 15243562546);
+    let command_2 = server_commands::get_new_messages(1, 3);
+    println!("{}", command_1.command);
+    println!("{}", command_2.command);
+    
 
     Ok(())
 }

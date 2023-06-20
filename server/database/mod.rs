@@ -1,2 +1,2 @@
-mod postgres_commands;
-mod server_commands;
+pub mod postgres_commands;
+pub mod server_commands;
