@@ -5,7 +5,7 @@ pub struct Command {
 impl Command {
     pub fn select(columns: Vec<String>, table: String) -> Self {
         Command {
-            command: format!("{} FROM {}", columns.join(", "), table),
+            command: format!("SELECT {} FROM {}", columns.join(", "), table),
         }
     }
 
