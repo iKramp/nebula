@@ -18,4 +18,9 @@ impl Command {
             command: format!("INSERT INTO {} ({}) VALUES ({})", table, columns.join(", "), elements.join("), ("))
         }
     }
+
+    pub fn _where(mut self, condition: &str) -> Self {
+        self.command.push_str(format!(" WHERE {condition}").as_str());
+        self
+    }
 }
