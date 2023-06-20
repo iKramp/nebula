@@ -3,6 +3,11 @@ pub struct Command {
 }
 
 impl Command {
+    pub fn execute(&mut self) {
+        self.command.push(';');
+        //execute here
+    }
+
     pub fn select(columns: Vec<String>, table: &str) -> Self {
         Command {
             command: format!("SELECT {} FROM {}", columns.join(", "), table),
@@ -24,9 +29,9 @@ impl Command {
         }
     }
 
-    pub fn _where(mut self, condition: &str) -> Self {
+    pub fn _where(mut self, condition: Vec<&str>) -> Self {
         self.command
-            .push_str(format!(" WHERE {condition}").as_str());
+            .push_str(format!(" WHERE {}", condition.join(" AND ")).as_str());
         self
     }
 
