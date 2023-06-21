@@ -41,7 +41,7 @@ async fn main() -> Result<()> {
     let command_2 = server_commands::get_new_messages(1, 3);
     println!("{}", command_1.command);
     println!("{}", command_2.command);
-    
+
 
     Ok(())
 }
