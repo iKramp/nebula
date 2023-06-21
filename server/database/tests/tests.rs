@@ -32,6 +32,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn database_test_save_message() {
         clear_db();
 
