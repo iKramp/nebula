@@ -32,7 +32,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_save_message() {
+    async fn database_test_save_message() {
         clear_db();
 
         let date_created: u64 = 1635676478;
