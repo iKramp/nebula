@@ -42,6 +42,5 @@ async fn main() -> Result<()> {
     println!("{}", command_1.command);
     println!("{}", command_2.command);
 
-
     Ok(())
 }
