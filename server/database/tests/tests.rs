@@ -1,16 +1,16 @@
 use super::init_db;
 use tokio_postgres::{Client, NoTls};
 use std::env;
-use futures::executor::block_on;
 use anyhow::{Result, Error};
+use super::init_db::*;
 
 const TEST_DB: &str = "testdb";
 
 fn clear_db() {
-    if let Err(e) = super::init_db::drop_db(&TEST_DB) {
+    if let Err(e) = drop_db(&TEST_DB) {
         panic!("{}", e);
     }
-    if let Err(e) = super::init_db::create_db(&TEST_DB) {
+    if let Err(e) = create_db(&TEST_DB) {
         panic!("{}", e);
     }
 }
@@ -39,7 +39,6 @@ mod tests {
     async fn test_save_message() {
         super::clear_db();
 
-
         let date_created: u64 = 1635676478;
         let user_id = 1;
         let channel_id = 1;
@@ -48,6 +47,8 @@ mod tests {
         let command = crate::database::server_commands::save_message(user_id, channel_id, text.clone(), date_created);
 
         let client = super::get_client().await;
+
+        super::populate_db(&client).await.unwrap();
 
         let res = client.execute(&*command.command, &[]).await;
 
