@@ -36,19 +36,10 @@ async fn main() -> Result<()> {
 
     let client = connect_to_db(username).await?;
 
-    // Now we can execute a simple statement that just returns its parameter.
-    let rows = client.query("SELECT $1::TEXT", &[&"hello world"]).await?;
 
-    // And then check that we got back the same string we sent over.
-    let value: &str = rows[0].get(0);
-    assert_eq!(value, "hello world");
-
-    //let command_1 = server_commands::save_message(1, 1, "tewuibewoifhnwqe".to_owned(), 15243562546);
-    //let command_2 = server_commands::get_new_messages(1, 3);
-    //println!("{}", command_1.command);
-    //println!("{}", command_2.command);
-
-    let get_new_message_command = client.prepare("SELECT * FROM messages AS message WHERE message.channel_id = $1::text::int4 AND message.id > $2::text::int4").await?;
+    //this is basically a test of some sort but please don't delete it, i don't wanna go through the hell of figuring out how to retrieve the columns again.
+    //because the columns can have any type, retrieving them is very unintuitive
+    /*let get_new_message_command = client.prepare("SELECT * FROM messages AS message WHERE message.channel_id = $1::text::int4 AND message.id > $2::text::int4").await?;
     let save_message_command = client.prepare("INSERT INTO messages (user_id, channel_id, text, date_created) VALUES ($1::text::int4, $2::text::int4, $3::text, $4::text::int8) RETURNING id").await?;
 
     client
@@ -68,7 +59,7 @@ async fn main() -> Result<()> {
                 println!("{}", val);
             }
         }
-    }
+    }*/
 
     Ok(())
 }
