@@ -1,5 +1,6 @@
 use super::postgres_commands::Command;
 
+#[allow(dead_code)] //still used by tests. will be changed soon.tm
 pub fn save_message(user_id: u32, channel_id: u32, text: String, date_created: u64) -> Command {
     Command::insert(
         "user_id, channel_id, text, date_created",
@@ -14,6 +15,7 @@ pub fn save_message(user_id: u32, channel_id: u32, text: String, date_created: u
     .returning("id")
 }
 
+#[allow(dead_code)] //still used by tests. will be changed soon.tm
 pub fn get_new_messages(channel_id: u32, last_message_id: u32) -> Command {
     Command::select(
         vec![

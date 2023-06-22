@@ -51,11 +51,17 @@ async fn main() -> Result<()> {
     let get_new_message_command = client.prepare("SELECT * FROM messages AS message WHERE message.channel_id = $1::text::int4 AND message.id > $2::text::int4").await?;
     let save_message_command = client.prepare("INSERT INTO messages (user_id, channel_id, text, date_created) VALUES ($1::text::int4, $2::text::int4, $3::text, $4::text::int8) RETURNING id").await?;
 
-    client.query(&save_message_command, &[&"1", &"1", &"test message", &"345263546"]).await?;
-    let res = client.query(&get_new_message_command, &[&"1", &"4"]).await?;
+    client
+        .query(
+            &save_message_command,
+            &[&"1", &"1", &"test message", &"345263546"],
+        )
+        .await?;
+    let res = client
+        .query(&get_new_message_command, &[&"1", &"4"])
+        .await?;
 
     for row in res {
-        let mut i = 0;
         for column in row.columns().iter().enumerate() {
             if column.1.type_().to_string() == "text" {
                 let val: String = row.get(column.0);
