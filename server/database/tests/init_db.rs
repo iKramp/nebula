@@ -24,26 +24,13 @@ pub mod init_db {
     }
 
     pub async fn populate_db(client: &tokio_postgres::Client) -> anyhow::Result<()> {
-        match super::init_db::get_populate_db_commands() {
-            Ok(str) => {
-                let commands = str.split(';');
+        let str = super::init_db::get_populate_db_commands()?;
 
-                for command in commands {
-                    let res = client.execute(command, &[]).await;
-                    match res {
-                        Err(e) => {
-                            panic!("{}", e);
-                        }
-                        Ok(res) => {
-                            println!("{}", res);
-                        }
-                    }
-                }
-                Ok(())
-            }
-            Err(e) => {
-                panic!("{}", e);
-            }
+        let commands = str.split(';');
+
+        for command in commands {
+            let _res = client.execute(command, &[]).await?;
         }
+        Ok(())
     }
 }

@@ -58,4 +58,28 @@ mod tests {
             panic!("{}", e)
         }
     }
+
+    #[tokio::test]
+    #[ignore]
+    async fn database_test_get_new_messages() {//TODO: this only tests if you can retrieve the data without errors, but doesn't yet test if the data is correct
+        clear_db();
+
+        let last_message_id = 2;
+        let channel_id = 1;
+
+        let command = crate::database::server_commands::get_new_messages(
+            channel_id,
+            last_message_id,
+        );
+
+        let client = get_client().await;
+
+        populate_db(&client).await.unwrap();
+
+        let res = client.execute(&*command.command, &[]).await;
+
+        if let Err(e) = res {
+            panic!("{}", e)
+        }
+    }
 }
