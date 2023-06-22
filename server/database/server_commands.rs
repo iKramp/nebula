@@ -9,7 +9,7 @@ pub fn save_message(user_id: u32, channel_id: u32, text: String, date_created: u
             format!("'{}'", text),
             date_created.to_string(),
         ]],
-        "message",
+        "messages",
     )
     .returning("id")
 }
@@ -22,10 +22,10 @@ pub fn get_new_messages(channel_id: u32, last_message_id: u32) -> Command {
             "text".to_owned(),
             "date_created".to_owned(),
         ],
-        "message",
+        "messages",
     )
     ._where(vec![
-        &format!("message.channel_id = {channel_id}"),
-        &format!("message.id > {last_message_id}"),
+        &format!("messages.channel_id = {channel_id}"),
+        &format!("messages.id > {last_message_id}"),
     ])
 }
