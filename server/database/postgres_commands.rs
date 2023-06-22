@@ -2,7 +2,7 @@ pub struct Command {
     pub command: String,
 }
 
-#[allow(dead_code)]//will be used, this is just to remind me not to forget the ; at the end
+#[allow(dead_code)] //will be used, this is just to remind me not to forget the ; at the end
 impl Command {
     pub fn execute(&mut self) {
         self.command.push(';');
