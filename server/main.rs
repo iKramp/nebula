@@ -35,8 +35,8 @@ async fn main() -> Result<()> {
     }
 
     let client = connect_to_db(username).await?;
-
-    let _database_commands = database::database_commands::DatabaseCommands::new(&client).await;
+    
+    let _db_manager = database::database_actions::DbManager::new(&client).await;
 
     println!("finished executing");
     Ok(())
