@@ -40,7 +40,7 @@ mod tests {
 
         populate_db(&client).await.unwrap();
 
-        let command = crate::database::database_commands::ServerCommands::new(&client).await;
+        let command = crate::database::database_commands::DatabaseCommands::new(&client).await;
 
         let res = client
             .execute(
@@ -58,16 +58,14 @@ mod tests {
     #[ignore]
     async fn database_test_get_new_messages() {
         //TODO: this only tests if you can retrieve the data without errors, but doesn't yet test if the data is correct
-        clear_db();
 
-        let last_message_id = 2;
-        let channel_id = 1;
+        clear_db();
 
         let client = get_client().await;
 
         populate_db(&client).await.unwrap();
 
-        let command = crate::database::database_commands::ServerCommands::new(&client).await;
+        let command = crate::database::database_commands::DatabaseCommands::new(&client).await;
 
         let res = client
             .execute(&command.get_new_messages_statement, &[&"1", &"2"])

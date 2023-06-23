@@ -8,26 +8,26 @@ DROP TABLE IF EXISTS "users";
 
 
 CREATE TABLE "users" (
-    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     profile_photo TEXT,
     name VARCHAR(255) UNIQUE
 );
 
 CREATE TABLE "channels" (
-    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    user_1_id INTEGER REFERENCES "users"(id),
-    user_2_id INTEGER REFERENCES "users"(id)
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    user_1_id BIGINT REFERENCES "users"(id),
+    user_2_id BIGINT REFERENCES "users"(id)
 );
 
 CREATE INDEX channel_user_1_id_index ON channels(user_1_id);
 CREATE INDEX channel_user_2_id_index ON channels(user_2_id);
 
 CREATE TABLE "messages" (
-    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    user_id INTEGER REFERENCES "users"(id),
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    user_id BIGINT REFERENCES "users"(id),
     text TEXT,
     date_created BIGINT,
-    channel_id INTEGER REFERENCES channels(id)
+    channel_id BIGINT REFERENCES channels(id)
 );
 
 CREATE INDEX message_channel_id_index ON messages(channel_id);

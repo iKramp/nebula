@@ -36,7 +36,7 @@ async fn main() -> Result<()> {
 
     let client = connect_to_db(username).await?;
 
-    let _database_commands = database::database_commands::ServerCommands::new(&client);
+    let _database_commands = database::database_commands::DatabaseCommands::new(&client).await;
 
     //this is basically a test of some sort but please don't delete it, i don't wanna go through the hell of figuring out how to retrieve the columns again.
     //because the columns can have any type, retrieving them is very unintuitive
@@ -62,5 +62,6 @@ async fn main() -> Result<()> {
         }
     }*/
 
+    println!("finished executing");
     Ok(())
 }
