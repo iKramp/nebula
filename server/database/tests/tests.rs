@@ -5,6 +5,7 @@ mod tests {
     use anyhow::{Error, Result};
     use std::env;
     use tokio_postgres::{Client, NoTls};
+    use crate::database::{data_types, database_actions};
 
     const TEST_DB: &str = "testdb";
 
@@ -38,6 +39,7 @@ mod tests {
 
         let client = get_client().await;
 
+        setup_db(&client).await.unwrap();
         populate_db(&client).await.unwrap();
 
         let command = crate::database::database_commands::DatabaseCommands::new(&client).await;
@@ -63,16 +65,30 @@ mod tests {
 
         let client = get_client().await;
 
+        setup_db(&client).await.unwrap();
         populate_db(&client).await.unwrap();
 
-        let command = crate::database::database_commands::DatabaseCommands::new(&client).await;
+        let db_manager = database_actions::DbManager::new(&client).await;
 
-        let res = client
-            .execute(&command.get_new_messages_statement, &[&"1", &"2"])
-            .await;
+        let message_1 = data_types::Message::new(1, 1, 1, "foo", 9741985714305981);
+        let message_2 = data_types::Message::new(1, 2, 1, "bar", 9741985714306934);
 
-        if let Err(e) = res {
-            panic!("{}", e)
+        db_manager.save_message(&message_1, &client).await.unwrap();
+        db_manager.save_message(&message_2, &client).await.unwrap();
+
+        let test_vec = vec![message_1, message_2];
+
+        let returned_vec = db_manager.get_new_messages(1, 5, &client).await.unwrap();
+
+        assert_eq!(test_vec.len(), returned_vec.len());
+        for ea in test_vec.iter().enumerate() {
+            let eb = returned_vec.get(ea.0).unwrap();
+            //not asserting IDs because the DB assigns them automatically. they are managed by the DB and cannot be known before saving the messages
+            assert_eq!(ea.1.channel_id, eb.channel_id);
+            assert_eq!(ea.1.user_id, eb.user_id);
+            assert_eq!(ea.1.text, eb.text);
+            assert_eq!(ea.1.date_created, eb.date_created)
         }
+
     }
 }
