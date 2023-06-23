@@ -13,6 +13,7 @@ impl DbManager {
         }
     }
 
+    #[allow(unused)]
     pub async fn save_message(
         &self,
         message: &data_types::Message,
@@ -32,19 +33,20 @@ impl DbManager {
         Ok(())
     }
 
+    #[allow(unused)]
     pub async fn get_new_messages(
         &self,
         channel_id: u64,
         last_message_id: u64,
         client: &tokio_postgres::Client,
     ) -> Result<Vec<data_types::Message>> {
-        let rows = client.query(
-            &self.commands.get_new_messages_statement,
-            &[
-                &channel_id.to_string(),
-                &last_message_id.to_string(),
-            ]).await?;
-        
+        let rows = client
+            .query(
+                &self.commands.get_new_messages_statement,
+                &[&channel_id.to_string(), &last_message_id.to_string()],
+            )
+            .await?;
+
         let mut message_vec = Vec::new();
 
         //this can panic, but it should if anything is wrong so we know immediately

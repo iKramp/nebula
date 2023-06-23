@@ -2,10 +2,10 @@
 mod tests {
 
     use crate::database::tests::init_db::init_db::*;
+    use crate::database::{data_types, database_actions};
     use anyhow::{Error, Result};
     use std::env;
     use tokio_postgres::{Client, NoTls};
-    use crate::database::{data_types, database_actions};
 
     const TEST_DB: &str = "testdb";
 
@@ -89,6 +89,5 @@ mod tests {
             assert_eq!(ea.1.text, eb.text);
             assert_eq!(ea.1.date_created, eb.date_created)
         }
-
     }
 }
