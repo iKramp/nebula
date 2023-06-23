@@ -1,3 +1,2 @@
-pub mod postgres_commands;
-pub mod server_commands;
+pub mod database_commands;
 mod tests;

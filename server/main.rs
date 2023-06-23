@@ -3,7 +3,7 @@ use anyhow::{Ok, Result};
 use std::env;
 use tokio_postgres::NoTls;
 mod database;
-use database::server_commands;
+use database::database_commands;
 
 async fn connect_to_db(username: &str) -> Result<tokio_postgres::Client> {
     // Connect to the database.
@@ -36,6 +36,7 @@ async fn main() -> Result<()> {
 
     let client = connect_to_db(username).await?;
 
+    let _database_commands = database::database_commands::ServerCommands::new(&client);
 
     //this is basically a test of some sort but please don't delete it, i don't wanna go through the hell of figuring out how to retrieve the columns again.
     //because the columns can have any type, retrieving them is very unintuitive

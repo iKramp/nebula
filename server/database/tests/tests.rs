@@ -36,23 +36,18 @@ mod tests {
     async fn database_test_save_message() {
         clear_db();
 
-        let date_created: u64 = 1635676478;
-        let user_id = 1;
-        let channel_id = 1;
-        let text = "test message".to_string();
-
-        let command = crate::database::server_commands::save_message(
-            user_id,
-            channel_id,
-            text.clone(),
-            date_created,
-        );
-
         let client = get_client().await;
 
         populate_db(&client).await.unwrap();
 
-        let res = client.execute(&*command.command, &[]).await;
+        let command = crate::database::database_commands::ServerCommands::new(&client).await;
+
+        let res = client
+            .execute(
+                &command.save_message_statement,
+                &[&"1", &"1", &"test message", &"345263546"],
+            )
+            .await;
 
         if let Err(e) = res {
             panic!("{}", e)
@@ -68,14 +63,15 @@ mod tests {
         let last_message_id = 2;
         let channel_id = 1;
 
-        let command =
-            crate::database::server_commands::get_new_messages(channel_id, last_message_id);
-
         let client = get_client().await;
 
         populate_db(&client).await.unwrap();
 
-        let res = client.execute(&*command.command, &[]).await;
+        let command = crate::database::database_commands::ServerCommands::new(&client).await;
+
+        let res = client
+            .execute(&command.get_new_messages_statement, &[&"1", &"2"])
+            .await;
 
         if let Err(e) = res {
             panic!("{}", e)
