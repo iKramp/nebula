@@ -1,85 +1,58 @@
+mod chat;
+mod selectable_text;
+
 use super::networking;
-use iced::widget::scrollable::{snap_to, RelativeOffset};
-use iced::widget::text_input::Appearance;
-use iced::widget::{column, row, scrollable, text, text_input, Column, Space};
 use iced::{
-    executor, subscription, theme, window, Alignment, Application, Background, Color, Command,
-    Element, Length, Result, Settings, Subscription, Theme,
+    executor, subscription, window, Application, Command, Element, Result, Settings, Subscription,
+    Theme,
 };
 use tokio::sync::mpsc::UnboundedSender;
 
+/// This is the main iced application struct.
 struct NebulaApp {
+    /// Sender to the networking thread.
     sender: Option<UnboundedSender<ToNetworkingEvent>>,
-    messages: Vec<Message>,
-    messages_scrollable_id: scrollable::Id,
-    messages_scroll_position: f32,
-    curr_message: String,
+    /// Module responsible for the chat ui.
+    chat_module: chat::ChatModule,
 }
 
+/// This is a message struct that is used to
+/// represent a message in the application.
 #[derive(Debug, Clone)]
 pub struct Message {
     pub message: String,
     pub sender: String,
 }
 
+/// Events are used to communicate between ui elements.
 #[derive(Debug, Clone)]
-enum Event {
+pub enum Event {
+    /// Any event that was sent from the networking thread.
     Networking(FromNetworkingEvent),
+    /// Called when the user types in the message box.
     TextInputted(String),
+    /// Called when the user scrolls the messages.
     ScrollingMessages(f32),
+    /// Called when the user presses the send button.
     MessageSubmitted,
+    /// Used when a function needs to return an Event, but it has nothing to return.
     Nothing,
 }
 
+/// These events are used to communicate from ui to networking.
 #[derive(Debug, Clone)]
 pub enum ToNetworkingEvent {
+    /// Called when the user sends a message.
     MessageSent(String),
 }
 
+/// These events are used to communicate from networking to ui.
 #[derive(Debug, Clone)]
 pub enum FromNetworkingEvent {
+    /// Called when the networking thread has been initialized and is ready to receive messages.
     SenderInitialized(UnboundedSender<ToNetworkingEvent>),
+    /// Called when the networking thread has received a message.
     MessageReceived(Message),
-}
-
-struct SelectableText;
-
-impl text_input::StyleSheet for SelectableText {
-    type Style = Theme;
-
-    fn active(&self, _style: &Self::Style) -> Appearance {
-        Appearance {
-            background: Background::Color(Color::from_rgba(0.0, 0.0, 0.0, 0.0)),
-            border_radius: 0.0,
-            border_width: 0.0,
-            border_color: Color::from_rgba(0.0, 0.0, 0.0, 0.0),
-            icon_color: Color::from_rgba(0.0, 0.0, 0.0, 0.0),
-        }
-    }
-
-    fn focused(&self, style: &Self::Style) -> Appearance {
-        self.active(style)
-    }
-
-    fn placeholder_color(&self, _style: &Self::Style) -> Color {
-        Color::from_rgba(0.0, 0.0, 0.0, 0.0)
-    }
-
-    fn value_color(&self, _style: &Self::Style) -> Color {
-        Color::from_rgba(1.0, 1.0, 1.0, 1.0)
-    }
-
-    fn disabled_color(&self, _style: &Self::Style) -> Color {
-        Color::from_rgba(0.0, 0.0, 0.0, 0.0)
-    }
-
-    fn selection_color(&self, _style: &Self::Style) -> Color {
-        Color::from_rgb(0.3, 0.3, 1.0)
-    }
-
-    fn disabled(&self, style: &Self::Style) -> Appearance {
-        self.active(style)
-    }
 }
 
 impl Application for NebulaApp {
@@ -92,10 +65,7 @@ impl Application for NebulaApp {
         (
             Self {
                 sender: None,
-                messages: Vec::new(),
-                messages_scrollable_id: scrollable::Id::unique(),
-                messages_scroll_position: 0.0,
-                curr_message: String::new(),
+                chat_module: chat::ChatModule::new(),
             },
             Command::none(),
         )
@@ -105,92 +75,21 @@ impl Application for NebulaApp {
         String::from("Nebula")
     }
 
-    fn update(&mut self, message: Event) -> Command<Event> {
-        let res = match message {
-            Event::Networking(event) => match event {
-                FromNetworkingEvent::MessageReceived(msg) => {
-                    self.messages.push(msg);
-                    if self.messages_scroll_position > 0.999 {
-                        snap_to(
-                            self.messages_scrollable_id.clone(),
-                            RelativeOffset { y: 1.0, x: 0.0 },
-                        )
-                    } else {
-                        Command::none()
-                    }
-                }
-                FromNetworkingEvent::SenderInitialized(sender) => {
-                    self.sender = Some(sender);
-                    Command::none()
-                }
-            },
+    fn update(&mut self, event: Event) -> Command<Event> {
+        if let Event::Networking(FromNetworkingEvent::SenderInitialized(sender)) = event.clone() {
+            self.sender = Some(sender);
+        }
 
-            Event::ScrollingMessages(scroll) => {
-                self.messages_scroll_position = scroll;
-                Command::none()
-            }
+        let commands = vec![self
+            .chat_module
+            .on_event(event, self.sender.as_mut().unwrap())];
 
-            Event::TextInputted(msg) => {
-                self.curr_message = msg;
-                Command::none()
-            }
-
-            Event::MessageSubmitted => {
-                self.sender
-                    .as_mut()
-                    .unwrap()
-                    .send(ToNetworkingEvent::MessageSent(self.curr_message.clone()))
-                    .unwrap();
-                self.curr_message.clear();
-                Command::none()
-            }
-
-            Event::Nothing => Command::none(),
-        };
-        res
+        Command::batch(commands)
     }
 
     fn view(&self) -> Element<Event> {
-        let messages_column: Column<Event, _> = column(
-            self.messages
-                .iter()
-                .map(|msg| {
-                    column![
-                        text::Text::new(msg.sender.clone()).size(15),
-                        row![
-                            Space::new(Length::Fixed(5.0), Length::Fixed(0.0)),
-                            text_input::TextInput::new("", &msg.message)
-                                .on_input(|_| Event::Nothing)
-                                .size(20)
-                                .style(theme::TextInput::Custom(Box::new(SelectableText))),
-                        ]
-                    ]
-                    .into()
-                })
-                .collect::<Vec<Element<_>>>(),
-        );
-
-        let messages_scrollable = scrollable(messages_column)
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .id(self.messages_scrollable_id.clone())
-            .on_scroll(move |scroll| Event::ScrollingMessages(scroll.y));
-
-        let chat_column: Column<_, _> = column![
-            messages_scrollable,
-            text_input::TextInput::new("", &self.curr_message)
-                .on_input(Event::TextInputted)
-                .on_submit(Event::MessageSubmitted)
-                .padding(5)
-                .size(20),
-        ];
-
-        chat_column
-            .padding(5)
-            .align_items(Alignment::Start)
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .into()
+        let chat_view = self.chat_module.view();
+        chat_view
     }
 
     fn theme(&self) -> Self::Theme {
