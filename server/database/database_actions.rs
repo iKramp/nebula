@@ -64,7 +64,7 @@ impl DbManager {
         let rows = client
             .query(
                 &self.commands.get_new_messages_statement,
-                &[&channel_id.to_string(), &last_message_id.to_string()],
+                &[&(channel_id as i64), &(last_message_id as i64)],
             )
             .await?;
 
@@ -81,11 +81,27 @@ impl DbManager {
         let rows = client
             .query(
                 &self.commands.get_last_n_messages_statement,
-                &[&channel_id.to_string(), &number_of_messages.to_string()],
+                &[&(channel_id as i64), &(number_of_messages as i64)],
             )
             .await?;
         let mut vec = get_message_vec(rows);
-        vec.reverse();
+        Ok(vec)
+    }
+
+    #[allow(unused)]
+    pub async fn get_n_messages_before(
+        &self,
+        channel_id: u64,
+        before_message_id: u64,
+        number_of_messages: u8,
+        client: &tokio_postgres::Client,
+        ) -> Result<Vec<data_types::Message>> {
+        let rows = client.query(
+            &self.commands.get_n_messages_before_statement,
+            &[&(channel_id as i64), &(before_message_id as i64), &(number_of_messages as i64)]
+        ).await?;
+
+        let vec = get_message_vec(rows);
         Ok(vec)
     }
 }
