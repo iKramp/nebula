@@ -64,18 +64,15 @@
 #![allow(clippy::cargo_common_metadata)]
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::std_instead_of_core)]
-#![allow(clippy::std_instead_of_core)]
 // temporary disable some Clippy lints
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::expect_used)]
 #![allow(clippy::panic)]
 
-mod render;
-use render::start;
-
+mod networking;
+mod user_interface;
 use iced::Result;
 
-#[tokio::main]
-pub async fn main() -> Result {
-    start().await
+pub fn main() -> Result {
+    user_interface::start()
 }
