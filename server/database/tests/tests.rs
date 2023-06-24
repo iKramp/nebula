@@ -34,7 +34,7 @@ mod tests {
 
     #[tokio::test]
     #[ignore]
-    async fn database_test_save_message() {
+    async fn database_test_save_message() {//might remove because the next test tests both
         clear_db();
 
         let client = get_client().await;
@@ -90,4 +90,44 @@ mod tests {
             assert_eq!(ea.1.date_created, eb.date_created)
         }
     }
+
+    #[tokio::test]
+    #[ignore]
+    async fn database_test_get_last_n_messages() {
+        clear_db();
+
+        let client = get_client().await;
+
+        setup_db(&client).await.unwrap();
+        populate_db(&client).await.unwrap();
+
+        let db_manager = database_actions::DbManager::new(&client).await;
+
+        let test_vec = vec![
+            data_types::Message::new(3, 1, 1, "Random text 3", 1687249040003),
+            data_types::Message::new(4, 2, 1, "Random text 4", 1687249040004),
+            data_types::Message::new(5, 1, 1, "Random text 5", 1687249040005),
+        ];
+
+        let mut returned_vec = db_manager.get_last_n_messages(1, 3, &client).await.unwrap();
+        returned_vec.reverse();
+
+        assert_eq!(test_vec.len(), returned_vec.len());
+        for ea in test_vec.iter().enumerate() {
+            let eb = returned_vec.get(ea.0).unwrap();
+            //not asserting IDs because the DB assigns them automatically. they are managed by the DB and cannot be known before saving the messages
+            assert_eq!(ea.1.channel_id, eb.channel_id);
+            assert_eq!(ea.1.user_id, eb.user_id);
+            assert_eq!(ea.1.text, eb.text);
+            assert_eq!(ea.1.date_created, eb.date_created)
+        }
+    }
 }
+
+/*
+(1, 1, 'Random text 1', 1687249040000),
+(2, 1, 'Random text 2', 1687249040000),
+(1, 1, 'Random text 3', 1687249040000),
+(2, 1, 'Random text 4', 1687249040000),
+(1, 1, 'Random text 5', 1687249040000);
+*/

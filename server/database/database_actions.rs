@@ -2,6 +2,27 @@ use super::data_types;
 use super::database_commands;
 use anyhow::{Ok, Result};
 
+fn get_message_vec(message_rows: Vec<tokio_postgres::Row>) -> Vec<data_types::Message> {
+    let mut message_vec = Vec::new();
+
+    //this can panic, but it should if anything is wrong so we know immediately
+    for row in message_rows {
+        let id: i64 = row.get(0);
+        let user_id: i64 = row.get(1);
+        let channel_id: i64 = row.get(2);
+        let text: String = row.get(3);
+        let date_created: i64 = row.get(4);
+        message_vec.push(data_types::Message::new(
+            id as u64,
+            user_id as u64,
+            channel_id as u64,
+            &text,
+            date_created as u64,
+        ))
+    }
+    message_vec
+}
+
 pub struct DbManager {
     commands: database_commands::DatabaseCommands,
 }
@@ -47,24 +68,24 @@ impl DbManager {
             )
             .await?;
 
-        let mut message_vec = Vec::new();
+        Ok(get_message_vec(rows))
+    }
 
-        //this can panic, but it should if anything is wrong so we know immediately
-        for row in rows {
-            let id: i64 = row.get(0);
-            let user_id: i64 = row.get(1);
-            let channel_id: i64 = row.get(2);
-            let text: String = row.get(3);
-            let date_created: i64 = row.get(4);
-            message_vec.push(data_types::Message::new(
-                id as u64,
-                user_id as u64,
-                channel_id as u64,
-                &text,
-                date_created as u64,
-            ))
-        }
-
-        Ok(message_vec)
+    #[allow(unused)]
+    pub async fn get_last_n_messages(
+        &self,
+        channel_id: u64,
+        number_of_messages: u8, //ye let's not allow big numbers
+        client: &tokio_postgres::Client,
+    ) -> Result<Vec<data_types::Message>> {
+        let rows = client
+            .query(
+                &self.commands.get_last_n_messages_statement,
+                &[&channel_id.to_string(), &number_of_messages.to_string()],
+            )
+            .await?;
+        let mut vec = get_message_vec(rows);
+        vec.reverse();
+        Ok(vec)
     }
 }
