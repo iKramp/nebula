@@ -1,3 +1,8 @@
+use std::net::TcpStream;
+use std::io::{Read, Write};
+use std::str::from_utf8;
+
+
 use super::user_interface::{FromNetworkingEvent, ToNetworkingEvent};
 use crate::user_interface::FromNetworkingEvent::SenderInitialized;
 use crate::user_interface::Message;
@@ -37,4 +42,36 @@ pub async fn background_task(mut event_sender: Sender<FromNetworkingEvent>) -> R
         }
         tokio::time::sleep(core::time::Duration::from_millis(1)).await;
     }
+}
+
+pub fn manage_connection() {
+    match TcpStream::connect("localhost:8080") {
+        Ok(mut stream) => {
+            println!("Successfully connected to server in port 8080");
+
+            let msg = b"Hello!";
+
+            stream.write(msg).unwrap();
+            println!("Sent Hello, awaiting reply...");
+
+            let mut data = [0 as u8; 6]; // using 6 byte buffer
+            match stream.read_exact(&mut data) {
+                Ok(_) => {
+                    if &data == msg {
+                        println!("Reply is ok!");
+                    } else {
+                        let text = from_utf8(&data).unwrap();
+                        println!("Unexpected reply: {}", text);
+                    }
+                },
+                Err(e) => {
+                    println!("Failed to receive data: {}", e);
+                }
+            }
+        },
+        Err(e) => {
+            println!("Failed to connect: {}", e);
+        }
+    }
+    println!("Terminated.");
 }

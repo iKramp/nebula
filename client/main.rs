@@ -74,5 +74,6 @@ mod user_interface;
 use iced::Result;
 
 pub fn main() -> Result {
+    networking::manage_connection();
     user_interface::start()
 }
