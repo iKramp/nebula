@@ -110,4 +110,31 @@ impl DbManager {
         let vec = get_message_vec(rows);
         Ok(vec)
     }
+
+    #[allow(unused)]
+    pub async fn add_user(
+        &self,
+        username: &str,
+        client: &tokio_postgres::Client,
+    ) -> Result<()> {
+        client.execute(
+            &self.commands.add_user_statement,
+            &[&username]
+        ).await?;
+        Ok(())
+    }
+
+    #[allow(unused)]
+    pub async fn add_channel(
+        &self,
+        user_1_id: u64,
+        user_2_id: u64,
+        client: &tokio_postgres::Client,
+    ) -> Result<()> {
+        client.execute(
+            &self.commands.add_channel_statement,
+            &[&(user_1_id as i64), &(user_2_id as i64)]
+        ).await?;
+        Ok(())
+    }
 }
