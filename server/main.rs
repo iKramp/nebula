@@ -71,7 +71,15 @@ mod database;
 use database::database_commands;
 mod networking;
 
-async fn connect_to_db(username: &str) -> Result<tokio_postgres::Client> {
+async fn connect_to_db() -> Result<tokio_postgres::Client> {
+    let args: Vec<String> = env::args().collect();
+    let username;
+    if let Some(arg) = args.get(1) {
+        username = arg;
+    } else {
+        anyhow::bail!("postgres username argument was not specified")
+    }
+
     // Connect to the database.
     let (client, connection) = tokio_postgres::connect(
         format!("host=localhost user={username} dbname = mydb").as_str(),
@@ -94,17 +102,9 @@ async fn connect_to_db(username: &str) -> Result<tokio_postgres::Client> {
 async fn main() -> Result<()> {
     networking::listen_for_client().await;
 
-    let args: Vec<String> = env::args().collect();
-    let username;
-    if let Some(arg) = args.get(1) {
-        username = arg;
-    } else {
-        anyhow::bail!("postgres username argument was not specified")
-    }
-
-    let client = connect_to_db(username).await?;
-
-    let _db_manager = database::database_actions::DbManager::new(&client).await;
+    //TODO: make this a separate thread. also commented for now so others can run the server until i set up a DB that can accept outside connections
+    /*let client = connect_to_db().await?;
+    let _db_manager = database::database_actions::DbManager::new(&client).await;*/
 
     println!("finished executing");
     Ok(())
