@@ -18,3 +18,7 @@ path = "server/main.rs"
 [[bin]]
 name = "client"
 path = "client/main.rs"
+
+[[bin]]
+name = "interface"
+path = "interface/main.rs"
