@@ -64,10 +64,12 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(unused_imports)]
 use anyhow::{Ok, Result};
+use iced::futures::FutureExt;
 use std::env;
 use tokio_postgres::NoTls;
 mod database;
 use database::database_commands;
+mod networking;
 
 async fn connect_to_db(username: &str) -> Result<tokio_postgres::Client> {
     // Connect to the database.
@@ -90,6 +92,8 @@ async fn connect_to_db(username: &str) -> Result<tokio_postgres::Client> {
 
 #[tokio::main] // By default, tokio_postgres uses the tokio crate as its runtime.
 async fn main() -> Result<()> {
+    networking::listen_for_client().await;
+
     let args: Vec<String> = env::args().collect();
     let username;
     if let Some(arg) = args.get(1) {
