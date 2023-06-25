@@ -74,8 +74,8 @@ mod networking;
 #[tokio::main] // By default, tokio_postgres uses the tokio crate as its runtime.
 async fn main() -> Result<()> {
     //TODO: commented for now so others can run the server until i set up a DB that can accept outside connections
-    /*let client = database::connect_to_db().await?;
-    let _db_manager = database::database_actions::DbManager::new(&client).await;*/
+    let client = database::connect_to_db("mydb").await?;
+    let _db_manager = database::database_actions::DbManager::new(&client).await;
 
     networking::listen_for_client().await;
 
