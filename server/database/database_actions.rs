@@ -18,7 +18,7 @@ fn get_message_vec(message_rows: Vec<tokio_postgres::Row>) -> Vec<data_types::Me
             channel_id as u64,
             &text,
             date_created as u64,
-        ))
+        ));
     }
     message_vec
 }
@@ -29,7 +29,7 @@ pub struct DbManager {
 
 impl DbManager {
     pub async fn new(client: &tokio_postgres::Client) -> Self {
-        DbManager {
+        Self {
             commands: database_commands::DatabaseCommands::new(client).await,
         }
     }
@@ -95,11 +95,17 @@ impl DbManager {
         before_message_id: u64,
         number_of_messages: u8,
         client: &tokio_postgres::Client,
-        ) -> Result<Vec<data_types::Message>> {
-        let rows = client.query(
-            &self.commands.get_n_messages_before_statement,
-            &[&(channel_id as i64), &(before_message_id as i64), &(number_of_messages as i64)]
-        ).await?;
+    ) -> Result<Vec<data_types::Message>> {
+        let rows = client
+            .query(
+                &self.commands.get_n_messages_before_statement,
+                &[
+                    &(channel_id as i64),
+                    &(before_message_id as i64),
+                    &(number_of_messages as i64),
+                ],
+            )
+            .await?;
 
         let vec = get_message_vec(rows);
         Ok(vec)

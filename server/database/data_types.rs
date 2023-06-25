@@ -8,7 +8,7 @@ pub struct Message {
 
 impl Message {
     pub fn new(id: u64, user_id: u64, channel_id: u64, text: &str, date_created: u64) -> Self {
-        Message {
+        Self {
             id,
             user_id,
             channel_id,

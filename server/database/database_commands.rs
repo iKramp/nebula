@@ -1,3 +1,5 @@
+#![allow(clippy::panic)] //something's wrong if it can't prepare the statements and the server can't continue anyway
+
 use anyhow::Result;
 use tokio_postgres::Statement;
 
@@ -10,7 +12,7 @@ pub struct DatabaseCommands {
 
 impl DatabaseCommands {
     pub async fn new(client: &tokio_postgres::Client) -> Self {
-        DatabaseCommands {
+        Self {
             save_message_statement: save_message(client).await,
             get_new_messages_statement: get_new_messages(client).await,
             get_last_n_messages_statement: get_last_n_messages(client).await,

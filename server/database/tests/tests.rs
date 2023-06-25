@@ -34,7 +34,8 @@ mod tests {
 
     #[tokio::test]
     #[ignore]
-    async fn database_test_save_message() {//might remove because the next test tests both
+    async fn database_test_save_message() {
+        //might remove because the next test tests both
         clear_db();
 
         let client = get_client().await;
@@ -141,7 +142,10 @@ mod tests {
             data_types::Message::new(4, 2, 1, "Random text 4", 1687249040004),
         ];
 
-        let mut returned_vec = db_manager.get_n_messages_before(1, 5, 3, &client).await.unwrap();
+        let mut returned_vec = db_manager
+            .get_n_messages_before(1, 5, 3, &client)
+            .await
+            .unwrap();
         returned_vec.reverse();
 
         assert_eq!(test_vec.len(), returned_vec.len());
