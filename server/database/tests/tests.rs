@@ -19,7 +19,7 @@ mod tests {
     }
 
     async fn get_client() -> tokio_postgres::Client {//TODO: merge this and the normal connect_to_db functions. maybe change what is hardcoded and what is a parameter
-        let args = format!("host=localhost user=postgres dbname = {}", TEST_DB);
+            let args = format!("host=localhost user=nebula password=nebula_password dbname = {}", TEST_DB);
         let f = tokio_postgres::connect(&args, NoTls).await;
         let (client, connection) = f.expect("couldn't connect");
 
@@ -36,7 +36,7 @@ mod tests {
     #[ignore]
     async fn database_test_save_message() {
         //might remove because the next test tests both
-        clear_db();
+        //clear_db();//TODO reenable when fixed
 
         let client = get_client().await;
 
@@ -62,7 +62,7 @@ mod tests {
     async fn database_test_get_new_messages() {
         //TODO: this only tests if you can retrieve the data without errors, but doesn't yet test if the data is correct
 
-        clear_db();
+        //clear_db();
 
         let client = get_client().await;
 
