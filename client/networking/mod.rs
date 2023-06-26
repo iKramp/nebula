@@ -4,7 +4,7 @@ use std::str::from_utf8;
 
 use super::user_interface::{FromNetworkingEvent, ToNetworkingEvent};
 use crate::user_interface::FromNetworkingEvent::SenderInitialized;
-use crate::user_interface::Message;
+use crate::user_interface::{Message, MessageId};
 use iced::futures::channel::mpsc::Sender;
 use iced::futures::SinkExt;
 use iced::Result;
@@ -24,24 +24,30 @@ pub async fn background_task(mut event_sender: Sender<FromNetworkingEvent>) -> R
             match message {
                 ToNetworkingEvent::MessageSent(msg) => {
                     event_sender
-                        .send(FromNetworkingEvent::MessageReceived(Message {
-                            message: msg,
-                            sender: "You".to_owned(),
-                        }))
+                        .send(FromNetworkingEvent::Message(
+                            MessageId::new(0),
+                            Message {
+                                contents: msg,
+                                sender: "You".to_owned(),
+                            },
+                        ))
                         .await
                         .unwrap();
                     tokio::time::sleep(core::time::Duration::from_millis(500)).await;
                     event_sender
-                        .send(FromNetworkingEvent::MessageReceived(Message {
-                            message: "Ok".to_owned(),
-                            sender: "Other guy".to_owned(),
-                        }))
+                        .send(FromNetworkingEvent::Message(
+                            MessageId::new(0),
+                            Message {
+                                contents: "Ok".to_owned(),
+                                sender: "Other guy".to_owned(),
+                            },
+                        ))
                         .await
                         .unwrap();
                 }
             }
         }
-        tokio::time::sleep(core::time::Duration::from_millis(1)).await;
+        tokio::time::sleep(core::time::Duration::from_millis(10)).await;
     }
 }
 
