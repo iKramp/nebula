@@ -1,6 +1,3 @@
-DROP INDEX IF EXISTS "channel_user_1_id_index";
-DROP INDEX IF EXISTS "channel_user_2_id_index";
-DROP INDEX IF EXISTS "message_channel_id_index";
 DROP TABLE IF EXISTS "messages";
 DROP TABLE IF EXISTS "channels";
 DROP TABLE IF EXISTS "users";
