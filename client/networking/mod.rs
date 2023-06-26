@@ -1,7 +1,6 @@
-use std::net::TcpStream;
 use std::io::{Read, Write};
+use std::net::TcpStream;
 use std::str::from_utf8;
-
 
 use super::user_interface::{FromNetworkingEvent, ToNetworkingEvent};
 use crate::user_interface::FromNetworkingEvent::SenderInitialized;
@@ -17,6 +16,8 @@ pub async fn background_task(mut event_sender: Sender<FromNetworkingEvent>) -> R
         .send(SenderInitialized(to_event_sender))
         .await
         .unwrap();
+
+    manage_connection();
 
     loop {
         while let Some(message) = to_event_receiver.recv().await {
@@ -63,12 +64,12 @@ pub fn manage_connection() {
                         let text = from_utf8(&data).unwrap();
                         println!("Unexpected reply: {}", text);
                     }
-                },
+                }
                 Err(e) => {
                     println!("Failed to receive data: {}", e);
                 }
             }
-        },
+        }
         Err(e) => {
             println!("Failed to connect: {}", e);
         }

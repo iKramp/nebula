@@ -54,15 +54,25 @@ pub async fn get_n_messages_before(client: &tokio_postgres::Client) -> Statement
 }
 
 pub async fn add_user(client: &tokio_postgres::Client) -> Statement {
-    match client.prepare("INSERT INTO users (name) VALUES ($1::text)").await {
-        Ok(statement) => { statement },
-        Err(e) => { panic!("failed to prepare statement: {}", e) }
+    match client
+        .prepare("INSERT INTO users (name) VALUES ($1::text)")
+        .await
+    {
+        Ok(statement) => statement,
+        Err(e) => {
+            panic!("failed to prepare statement: {}", e)
+        }
     }
 }
 
 pub async fn add_channel(client: &tokio_postgres::Client) -> Statement {
-    match client.prepare("INSERT INTO channels (user_1_id, user_2_id) VALUES ($1::int8, $2::int8)").await {
-        Ok(statement) => { statement },
-        Err(e) => { panic!("failed to prepare statement: {}", e) }
+    match client
+        .prepare("INSERT INTO channels (user_1_id, user_2_id) VALUES ($1::int8, $2::int8)")
+        .await
+    {
+        Ok(statement) => statement,
+        Err(e) => {
+            panic!("failed to prepare statement: {}", e)
+        }
     }
 }

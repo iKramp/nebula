@@ -76,10 +76,12 @@ impl Application for NebulaApp {
     }
 
     fn update(&mut self, event: Event) -> Command<Event> {
+        // If the networking thread has been initialized, save the sender.
         if let Event::Networking(FromNetworkingEvent::SenderInitialized(sender)) = event.clone() {
             self.sender = Some(sender);
         }
 
+        // Propagate the event to the chat module.
         let commands = vec![self
             .chat_module
             .on_event(event, self.sender.as_mut().unwrap())];
@@ -96,8 +98,8 @@ impl Application for NebulaApp {
         Theme::Dark
     }
 
-    // create a subscription that will be polled for new messages
     fn subscription(&self) -> Subscription<Event> {
+        // create a subscription that will be polled for new messages
         struct NetworkingWorker;
         subscription::channel(
             std::any::TypeId::of::<NetworkingWorker>(),
