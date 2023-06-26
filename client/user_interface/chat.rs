@@ -32,7 +32,7 @@ impl ChatModule {
         sender: &mut UnboundedSender<ToNetworkingEvent>,
     ) -> Command<Event> {
         match event {
-            Event::Networking(FromNetworkingEvent::MessageReceived(msg)) => {
+            Event::Networking(FromNetworkingEvent::Message(_id, msg)) => {
                 self.messages.push(msg);
                 if self.messages_scroll_position > 0.999 {
                     snap_to(
@@ -75,7 +75,7 @@ impl ChatModule {
                         Text::new(msg.sender.clone()).size(15),
                         row![
                             Space::new(Length::Fixed(5.0), Length::Fixed(0.0)),
-                            TextInput::new("", &msg.message)
+                            TextInput::new("", &msg.contents)
                                 .on_input(|_| Event::Nothing)
                                 .size(20)
                                 .style(theme::TextInput::Custom(Box::new(SelectableText))),
