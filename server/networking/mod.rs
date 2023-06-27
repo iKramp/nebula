@@ -10,7 +10,7 @@ pub fn handle_client(mut stream: TcpStream) -> Result<(),Error> {
         let bytes_read = stream.read(&mut buf)?;
         if bytes_read == 0 { return Ok(());}
         println!("Received message");
-        stream.write(&buf[..bytes_read])?;
+        stream.write_all(&buf[..bytes_read])?;
     }
 }
 

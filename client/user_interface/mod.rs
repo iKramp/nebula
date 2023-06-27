@@ -2,6 +2,8 @@ mod chat;
 mod message_manager;
 mod selectable_text;
 
+use crate::networking::ClientNetworking;
+
 use super::networking;
 use iced::{
     executor, subscription, window, Application, Command, Element, Result, Settings, Subscription,
@@ -114,7 +116,7 @@ impl Application for NebulaApp {
             Self {
                 sender: None,
                 message_manager: MessageManager::new(),
-                chat_module: chat::ChatModule::new(),
+                chat_module: chat::ChatModule::new()
             },
             Command::none(),
         )
@@ -153,11 +155,12 @@ impl Application for NebulaApp {
     fn subscription(&self) -> Subscription<Event> {
         // create a subscription that will be polled for new messages
         struct NetworkingWorker;
+        let mut net = ClientNetworking::new();
         subscription::channel(
             std::any::TypeId::of::<NetworkingWorker>(),
             100,
             |sender| async move {
-                networking::manage_connection(sender).await.unwrap();
+                net.manage_connection(sender).await.unwrap();
                 panic!("Networking worker died");
             },
         )

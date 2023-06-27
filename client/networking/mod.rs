@@ -10,96 +10,82 @@ use iced::futures::SinkExt;
 use iced::Result;
 use tokio::sync::mpsc;
 
-pub async fn background_task(mut event_sender: Sender<FromNetworkingEvent>) -> Result {
-    let (to_event_sender, mut to_event_receiver) = mpsc::unbounded_channel::<ToNetworkingEvent>();
-    event_sender
-        .send(SenderInitialized(to_event_sender))
-        .await
-        .unwrap();
 
-    //manage_connection();
+pub struct ClientNetworking{
+    stream : Option<TcpStream>
+}
 
-    loop {
-        while let Some(message) = to_event_receiver.recv().await {
-            match message {
-                ToNetworkingEvent::MessageSent(msg) => {
-                    event_sender
-                        .send(FromNetworkingEvent::Message(
+impl ClientNetworking {
+    pub fn new() -> Self {
+        Self {
+            stream : None
+        }
+    }
+
+    pub async fn manage_connection(&mut self, mut event_sender: Sender<FromNetworkingEvent>) -> Result {
+            let (to_event_sender, mut to_event_receiver) = mpsc::unbounded_channel::<ToNetworkingEvent>();
+        event_sender
+            .send(SenderInitialized(to_event_sender))
+            .await
+            .unwrap();
+
+        self.stream = Some(TcpStream::connect("localhost:8080").expect("Couldnt connect to server!"));
+
+        println!("Established connection");
+
+        loop {
+            while let Some(message) = to_event_receiver.recv().await {
+                match message {
+                    ToNetworkingEvent::MessageSent(msg) => {
+                        //send message to yourself
+                        event_sender
+                            .send(FromNetworkingEvent::Message(
+                                MessageId::new(0),
+                                Message {
+                                    contents: msg.clone(),
+                                    sender: "You".to_owned(),
+                                },
+                            ))
+                            .await
+                            .unwrap();
+                        
+                        //send to server
+                        self.stream.as_ref().unwrap().write(&msg.as_bytes());   
+                        println!("Sending message to server,awaiting reply...");
+                        //await reply
+                        let mut buf = [0;512];
+                        let bytes_read = self.stream.as_ref().unwrap().read(&mut buf).unwrap();
+                        if bytes_read == 0 { return Ok(());}
+                        println!("Got it");
+                            event_sender.send(FromNetworkingEvent::Message(
                             MessageId::new(0),
                             Message {
-                                contents: msg,
-                                sender: "You".to_owned(),
-                            },
-                        ))
-                        .await
-                        .unwrap();
-                    tokio::time::sleep(core::time::Duration::from_millis(500)).await;
-                    event_sender
-                        .send(FromNetworkingEvent::Message(
-                            MessageId::new(0),
-                            Message {
-                                contents: "Ok".to_owned(),
+                                contents: std::str::from_utf8(&buf[..bytes_read]).unwrap().to_string(),
                                 sender: "Other guy".to_owned(),
                             },
-                        ))
-                        .await
-                        .unwrap();
+                            ))
+                            .await
+                            .unwrap();                            
+                        tokio::time::sleep(core::time::Duration::from_millis(10)).await;
+                    },
+                    _ => (),
                 }
             }
         }
-        tokio::time::sleep(core::time::Duration::from_millis(10)).await;
+        //println!("Terminated.");
     }
-}
 
-pub async fn manage_connection(mut event_sender: Sender<FromNetworkingEvent>) -> Result {
-    let (to_event_sender, mut to_event_receiver) = mpsc::unbounded_channel::<ToNetworkingEvent>();
-    event_sender
-        .send(SenderInitialized(to_event_sender))
-        .await
-        .unwrap();
 
-    let mut stream = TcpStream::connect("localhost:8080").expect("Couldnt connect to server!");
+    pub fn pollServer(){
 
-    println!("Established connection");
 
-    loop {
-        while let Some(message) = to_event_receiver.recv().await {
-            match message {
-                ToNetworkingEvent::MessageSent(msg) => {
-                    //send message to yourself
-                    event_sender
-                        .send(FromNetworkingEvent::Message(
-                            MessageId::new(0),
-                            Message {
-                                contents: msg.clone(),
-                                sender: "You".to_owned(),
-                            },
-                        ))
-                        .await
-                        .unwrap();
-                    
-                    //send to server
-                    stream.write(&msg.as_bytes());    
-                    println!("Sending message to server,awaiting reply...");
-                    //await reply
-                    let mut buf = [0;512];
-                    let bytes_read = stream.read(&mut buf).unwrap();
-                    if bytes_read == 0 { return Ok(());}
-                    println!("Got it");
-                        event_sender.send(FromNetworkingEvent::Message(
-                        MessageId::new(0),
-                        Message {
-                            contents: std::str::from_utf8(&buf[..bytes_read]).unwrap().to_string(),
-                            sender: "Other guy".to_owned(),
-                        },
-                        ))
-                        .await
-                        .unwrap();                            
-                    tokio::time::sleep(core::time::Duration::from_millis(10)).await;
-                },
-                _ => (),
-            }
-        }
+
     }
-    //println!("Terminated.");
+
+    pub fn send_message(){
+
+
+
+
+    }
 }
