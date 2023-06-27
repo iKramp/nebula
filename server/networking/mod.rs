@@ -3,24 +3,21 @@ use std::net::{Shutdown, TcpListener, TcpStream};
 use std::thread;
 
 pub fn handle_client(mut stream: TcpStream) {
-    let mut data = [0 as u8; 100]; // data buffer
-    while match stream.read(&mut data) {
-        Ok(size) => {
-            stream.write(&data[0..size]).unwrap();
-            true
-        }
-        Err(_) => {
-            println!(
-                "An error occurred, terminating connection with {}",
-                stream.peer_addr().unwrap()
-            );
-            stream.shutdown(Shutdown::Both).unwrap();
-            false
-        }
+    let mut data = [0_u8; 100]; // data buffer
+    while if let Ok(size) = stream.read(&mut data) {
+    stream.write_all(data.get(0..size).unwrap()).unwrap();
+    true
+} else {
+    println!(
+        "An error occurred, terminating connection with {}",
+        stream.peer_addr().unwrap()
+    );
+    stream.shutdown(Shutdown::Both).unwrap();
+    false
     } {}
 }
 
-pub async fn listen_for_client() {
+pub fn listen_for_client() {
     //listen on port 8080
     let listener = TcpListener::bind("localhost:8080").unwrap();
     println!("Server listening on port 8080");
@@ -35,7 +32,7 @@ pub async fn listen_for_client() {
                 });
             }
             Err(e) => {
-                println!("Error: {}", e);
+                println!("Error: {e}");
             }
         }
     }

@@ -1,7 +1,7 @@
-use crate::user_interface::{Channel, ChannelId, Event, FromNetworkingEvent, Message, MessageId};
+use crate::user_interface::{Channel, ChannelId, FromNetworkingEvent, Message, MessageId};
 use std::collections::HashMap;
 
-/// MessageManager is responsible for keeping track of
+/// `MessageManager` is responsible for keeping track of
 /// messages and channels. It is also responsible for
 /// receiving events from the networking thread.
 #[derive(Debug)]

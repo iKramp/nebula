@@ -77,7 +77,7 @@ async fn main() -> Result<()> {
     let client = database::connect_to_db("nebula").await?;
     let _db_manager = database::database_actions::DbManager::new(&client).await;
 
-    networking::listen_for_client().await;
+    networking::listen_for_client();
 
     println!("finished executing");
     Ok(())

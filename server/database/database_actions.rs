@@ -51,7 +51,7 @@ impl DbManager {
                 ],
             )
             .await?;
-        let id: i64 = res.get(0 as usize).unwrap().get(0 as usize);
+        let id: i64 = res.get(0).unwrap().get(0);
         Ok(id as u64)
     }
 
@@ -118,7 +118,7 @@ impl DbManager {
         let res = client
             .query(&self.commands.add_user_statement, &[&username])
             .await?;
-        let id: i64 = res.get(0 as usize).unwrap().get(0 as usize);
+        let id: i64 = res.get(0).unwrap().get(0);
         Ok(id as u64)
     }
 
@@ -132,7 +132,7 @@ impl DbManager {
         let res = client
             .query(&self.commands.add_channel_statement, &[&name])
             .await?;
-        let id: i64 = res.get(0 as usize).unwrap().get(0 as usize);
+        let id: i64 = res.get(0).unwrap().get(0);
         Ok(id as u64)
     }
 
@@ -150,7 +150,7 @@ impl DbManager {
                 &[&(user_id as i64), &(channel_id as i64)],
             )
             .await?;
-        let id: i64 = res.get(0 as usize).unwrap().get(0 as usize);
+        let id: i64 = res.get(0).unwrap().get(0);
         Ok(id as u64)
     }
 }
