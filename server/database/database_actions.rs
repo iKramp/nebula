@@ -39,9 +39,9 @@ impl DbManager {
         &self,
         message: &data_types::Message,
         client: &tokio_postgres::Client,
-    ) -> Result<()> {
-        client
-            .execute(
+    ) -> Result<u64> {
+        let res = client
+            .query(
                 &self.commands.save_message_statement,
                 &[
                     &message.user_id.to_string(),
@@ -51,7 +51,8 @@ impl DbManager {
                 ],
             )
             .await?;
-        Ok(())
+        let id: i64 = res.get(0 as usize).unwrap().get(0 as usize);
+        Ok(id as u64)
     }
 
     #[allow(unused)]
@@ -112,12 +113,13 @@ impl DbManager {
     }
 
     #[allow(unused)]
-    pub async fn add_user(&self, username: &str, client: &tokio_postgres::Client) -> Result<()> {
+    pub async fn add_user(&self, username: &str, client: &tokio_postgres::Client) -> Result<u64> {
         //TODO: probably doesn't work. write tests
-        client
-            .execute(&self.commands.add_user_statement, &[&username])
+        let res = client
+            .query(&self.commands.add_user_statement, &[&username])
             .await?;
-        Ok(())
+        let id: i64 = res.get(0 as usize).unwrap().get(0 as usize);
+        Ok(id as u64)
     }
 
     #[allow(unused)]
@@ -126,11 +128,12 @@ impl DbManager {
         &self,
         name: &str,
         client: &tokio_postgres::Client,
-    ) -> Result<()> {
-        let channel_id = client
+    ) -> Result<u64> {
+        let res = client
             .query(&self.commands.add_channel_statement, &[&name])
             .await?;
-        Ok(())
+        let id: i64 = res.get(0 as usize).unwrap().get(0 as usize);
+        Ok(id as u64)
     }
 
     #[allow(unused)]
@@ -140,13 +143,14 @@ impl DbManager {
         user_id: u64,
         channel_id: u64,
         client: &tokio_postgres::Client,
-    ) -> Result<()> {
-        client
-            .execute(
+    ) -> Result<u64> {
+        let res = client
+            .query(
                 &self.commands.add_user_channel_link,
                 &[&(user_id as i64), &(channel_id as i64)],
             )
             .await?;
-        Ok(())
+        let id: i64 = res.get(0 as usize).unwrap().get(0 as usize);
+        Ok(id as u64)
     }
 }
