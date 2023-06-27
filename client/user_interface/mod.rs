@@ -155,11 +155,11 @@ impl Application for NebulaApp {
     fn subscription(&self) -> Subscription<Event> {
         // create a subscription that will be polled for new messages
         struct NetworkingWorker;
-        let mut net = ClientNetworking::new();
         subscription::channel(
             std::any::TypeId::of::<NetworkingWorker>(),
             100,
             |sender| async move {
+                let mut net = ClientNetworking::new();
                 net.manage_connection(sender).await.unwrap();
                 panic!("Networking worker died");
             },
