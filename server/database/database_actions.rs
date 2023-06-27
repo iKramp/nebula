@@ -51,8 +51,16 @@ impl DbManager {
                 ],
             )
             .await?;
-        let id: i64 = res.get(0).unwrap().get(0);
-        Ok(id as u64)
+        let row = res.get(0);
+        match row {
+            Some(row) => {
+                let id: i64 = row.try_get(0)?;
+                Ok(id as u64)
+            }
+            None => {
+                anyhow::bail!("database error at saving a message")
+            }
+        }
     }
 
     #[allow(unused)]
@@ -118,8 +126,16 @@ impl DbManager {
         let res = client
             .query(&self.commands.add_user_statement, &[&username])
             .await?;
-        let id: i64 = res.get(0).unwrap().get(0);
-        Ok(id as u64)
+        let row = res.get(0);
+        match row {
+            Some(row) => {
+                let id: i64 = row.try_get(0)?;
+                Ok(id as u64)
+            }
+            None => {
+                anyhow::bail!("database error at adding a user")
+            }
+        }
     }
 
     #[allow(unused)]
@@ -132,8 +148,16 @@ impl DbManager {
         let res = client
             .query(&self.commands.add_channel_statement, &[&name])
             .await?;
-        let id: i64 = res.get(0).unwrap().get(0);
-        Ok(id as u64)
+        let row = res.get(0);
+        match row {
+            Some(row) => {
+                let id: i64 = row.try_get(0)?;
+                Ok(id as u64)
+            }
+            None => {
+                anyhow::bail!("database error at adding a channel")
+            }
+        }
     }
 
     #[allow(unused)]
@@ -150,7 +174,15 @@ impl DbManager {
                 &[&(user_id as i64), &(channel_id as i64)],
             )
             .await?;
-        let id: i64 = res.get(0).unwrap().get(0);
-        Ok(id as u64)
+        let row = res.get(0);
+        match row {
+            Some(row) => {
+                let id: i64 = row.try_get(0)?;
+                Ok(id as u64)
+            }
+            None => {
+                anyhow::bail!("database error at adding a user-channel link")
+            }
+        }
     }
 }

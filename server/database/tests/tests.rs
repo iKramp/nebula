@@ -7,8 +7,6 @@ mod tests {
     use std::env;
     use tokio_postgres::{Client, NoTls};
 
-    const TEST_DB: &str = "testdb";
-
     async fn get_client() -> tokio_postgres::Client {
         //TODO: merge this and the normal connect_to_db functions. maybe change what is hardcoded and what is a parameter
         let args = std::env::var("DB_CONNECT_ARGS").unwrap();
