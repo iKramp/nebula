@@ -9,18 +9,9 @@ mod tests {
 
     const TEST_DB: &str = "testdb";
 
-    fn clear_db() {
-        if let Err(e) = drop_db(TEST_DB) {
-            panic!("{}", e);
-        }
-        if let Err(e) = create_db(TEST_DB) {
-            panic!("{}", e);
-        }
-    }
-
     async fn get_client() -> tokio_postgres::Client {
         //TODO: merge this and the normal connect_to_db functions. maybe change what is hardcoded and what is a parameter
-        let args = format!("host= user= password= dbname = {}", TEST_DB);
+        let args = std::env::var("DB_CONNECT_ARGS").unwrap();
         let f = tokio_postgres::connect(&args, NoTls).await;
         let (client, connection) = f.expect("couldn't connect");
 
@@ -35,33 +26,7 @@ mod tests {
 
     #[tokio::test]
     #[ignore]
-    async fn database_test_save_message() {
-        //might remove because the next test tests both
-
-        let client = get_client().await;
-
-        setup_db(&client).await.unwrap();
-        populate_db(&client).await.unwrap();
-
-        let command = crate::database::database_commands::DatabaseCommands::new(&client).await;
-
-        let res = client
-            .execute(
-                &command.save_message_statement,
-                &[&"1", &"1", &"test message", &"345263546"],
-            )
-            .await;
-
-        if let Err(e) = res {
-            panic!("{}", e)
-        }
-    }
-
-    #[tokio::test]
-    #[ignore]
     async fn database_test_get_new_messages() {
-        //TODO: this only tests if you can retrieve the data without errors, but doesn't yet test if the data is correct
-
         let client = get_client().await;
 
         setup_db(&client).await.unwrap();
@@ -123,8 +88,6 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn database_test_get_n_messages_before() {
-        //clear_db();
-
         let client = get_client().await;
 
         setup_db(&client).await.unwrap();
