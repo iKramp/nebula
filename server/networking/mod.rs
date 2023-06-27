@@ -5,15 +5,15 @@ use std::thread;
 pub fn handle_client(mut stream: TcpStream) {
     let mut data = [0_u8; 100]; // data buffer
     while if let Ok(size) = stream.read(&mut data) {
-    stream.write_all(data.get(0..size).unwrap()).unwrap();
-    true
-} else {
-    println!(
-        "An error occurred, terminating connection with {}",
-        stream.peer_addr().unwrap()
-    );
-    stream.shutdown(Shutdown::Both).unwrap();
-    false
+        stream.write_all(data.get(0..size).unwrap()).unwrap();
+        true
+    } else {
+        println!(
+            "An error occurred, terminating connection with {}",
+            stream.peer_addr().unwrap()
+        );
+        stream.shutdown(Shutdown::Both).unwrap();
+        false
     } {}
 }
 

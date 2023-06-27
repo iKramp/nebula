@@ -24,7 +24,10 @@ mod tests {
         client
     }
 
-    async fn assert_equal_vectors(first_vec: Vec<data_types::Message>, second_vec: Vec<data_types::Message>) {
+    async fn assert_equal_vectors(
+        first_vec: Vec<data_types::Message>,
+        second_vec: Vec<data_types::Message>,
+    ) {
         assert_eq!(first_vec.len(), second_vec.len());
 
         for (index, message) in first_vec.iter().enumerate() {
@@ -40,21 +43,21 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn database_test_save_messages() {
-            let client = get_client().await;
+        let client = get_client().await;
 
-            setup_db(&client).await.unwrap();
-            populate_db(&client).await.unwrap();
+        setup_db(&client).await.unwrap();
+        populate_db(&client).await.unwrap();
 
-            let db_manager = database_actions::DbManager::new(&client).await;
+        let db_manager = database_actions::DbManager::new(&client).await;
 
-            let message_1 = data_types::Message::new(1, 1, 1, "foo", 9741985714305981);
-            let message_2 = data_types::Message::new(1, 2, 1, "bar", 9741985714306934);
+        let message_1 = data_types::Message::new(1, 1, 1, "foo", 9741985714305981);
+        let message_2 = data_types::Message::new(1, 2, 1, "bar", 9741985714306934);
 
-            let id_1 = db_manager.save_message(&message_1, &client).await.unwrap();
-            let id_2 = db_manager.save_message(&message_2, &client).await.unwrap();
+        let id_1 = db_manager.save_message(&message_1, &client).await.unwrap();
+        let id_2 = db_manager.save_message(&message_2, &client).await.unwrap();
 
-            assert_eq!(id_1, 6);
-            assert_eq!(id_2, 7);
+        assert_eq!(id_1, 6);
+        assert_eq!(id_2, 7);
     }
 
     #[tokio::test]
