@@ -157,7 +157,7 @@ impl Application for NebulaApp {
             std::any::TypeId::of::<NetworkingWorker>(),
             100,
             |sender| async move {
-                networking::background_task(sender).await.unwrap();
+                networking::manage_connection(sender).await.unwrap();
                 panic!("Networking worker died");
             },
         )

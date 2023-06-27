@@ -1,4 +1,4 @@
-use std::io::{Read, Write};
+use std::io::{Read, Write,BufReader,BufRead};
 use std::net::TcpStream;
 use std::str::from_utf8;
 
@@ -17,7 +17,7 @@ pub async fn background_task(mut event_sender: Sender<FromNetworkingEvent>) -> R
         .await
         .unwrap();
 
-    manage_connection();
+    //manage_connection();
 
     loop {
         while let Some(message) = to_event_receiver.recv().await {
@@ -51,34 +51,55 @@ pub async fn background_task(mut event_sender: Sender<FromNetworkingEvent>) -> R
     }
 }
 
-pub fn manage_connection() {
-    match TcpStream::connect("localhost:8080") {
-        Ok(mut stream) => {
-            println!("Successfully connected to server in port 8080");
+pub async fn manage_connection(mut event_sender: Sender<FromNetworkingEvent>) -> Result {
+    let (to_event_sender, mut to_event_receiver) = mpsc::unbounded_channel::<ToNetworkingEvent>();
+    event_sender
+        .send(SenderInitialized(to_event_sender))
+        .await
+        .unwrap();
 
-            let msg = b"Hello!";
+    let mut stream = TcpStream::connect("localhost:8080").expect("Couldnt connect to server!");
 
-            stream.write_all(msg).unwrap();
-            println!("Sent Hello, awaiting reply...");
+    println!("Established connection");
 
-            let mut data = [0_u8; 6]; // using 6 byte buffer
-            match stream.read_exact(&mut data) {
-                Ok(_) => {
-                    if &data == msg {
-                        println!("Reply is ok!");
-                    } else {
-                        let text = from_utf8(&data).unwrap();
-                        println!("Unexpected reply: {text}");
-                    }
-                }
-                Err(e) => {
-                    println!("Failed to receive data: {e}");
-                }
+    loop {
+        while let Some(message) = to_event_receiver.recv().await {
+            match message {
+                ToNetworkingEvent::MessageSent(msg) => {
+                    //send message to yourself
+                    event_sender
+                        .send(FromNetworkingEvent::Message(
+                            MessageId::new(0),
+                            Message {
+                                contents: msg.clone(),
+                                sender: "You".to_owned(),
+                            },
+                        ))
+                        .await
+                        .unwrap();
+                    
+                    //send to server
+                    stream.write(&msg.as_bytes());    
+                    println!("Sending message to server,awaiting reply...");
+                    //await reply
+                    let mut buf = [0;512];
+                    let bytes_read = stream.read(&mut buf).unwrap();
+                    if bytes_read == 0 { return Ok(());}
+                    println!("Got it");
+                        event_sender.send(FromNetworkingEvent::Message(
+                        MessageId::new(0),
+                        Message {
+                            contents: std::str::from_utf8(&buf[..bytes_read]).unwrap().to_string(),
+                            sender: "Other guy".to_owned(),
+                        },
+                        ))
+                        .await
+                        .unwrap();                            
+                    tokio::time::sleep(core::time::Duration::from_millis(10)).await;
+                },
+                _ => (),
             }
         }
-        Err(e) => {
-            println!("Failed to connect: {e}");
-        }
     }
-    println!("Terminated.");
+    //println!("Terminated.");
 }

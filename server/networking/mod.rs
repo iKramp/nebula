@@ -1,20 +1,17 @@
-use std::io::{Read, Write};
+use std::io::{Read, Write,Error};
 use std::net::{Shutdown, TcpListener, TcpStream};
 use std::thread;
 
-pub fn handle_client(mut stream: TcpStream) {
-    let mut data = [0_u8; 100]; // data buffer
-    while if let Ok(size) = stream.read(&mut data) {
-        stream.write_all(data.get(0..size).unwrap()).unwrap();
-        true
-    } else {
-        println!(
-            "An error occurred, terminating connection with {}",
-            stream.peer_addr().unwrap()
-        );
-        stream.shutdown(Shutdown::Both).unwrap();
-        false
-    } {}
+pub fn handle_client(mut stream: TcpStream) -> Result<(),Error> {
+    println!("Incoming connection from: {}",stream.peer_addr()?);
+    let mut buf = [0;512];
+
+    loop {
+        let bytes_read = stream.read(&mut buf)?;
+        if bytes_read == 0 { return Ok(());}
+        println!("Received message");
+        stream.write(&buf[..bytes_read])?;
+    }
 }
 
 pub fn listen_for_client() {
@@ -28,7 +25,7 @@ pub fn listen_for_client() {
             Ok(stream) => {
                 println!("New connection: {} ", stream.peer_addr().unwrap());
                 thread::spawn(move || {
-                    handle_client(stream);
+                    handle_client(stream).unwrap_or_else(|error| eprintln!("{:?}",error));
                 });
             }
             Err(e) => {
