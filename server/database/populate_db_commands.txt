@@ -1,6 +1,10 @@
 INSERT INTO "users" (name) VALUES ('user1'), ('user2');
 
-INSERT INTO "channels" (user_1_id, user_2_id) VALUES (1, 2);
+INSERT INTO "channels" (name) VALUES ('channel_1');
+
+INSERT INTO "channel_user_links" (channel_id, user_id) VALUES
+(1, 1),
+(1, 2);
 
 INSERT INTO messages (user_id, channel_id, text, date_created) VALUES
 (1, 1, 'Random text 1', 1687249040001),

@@ -1,8 +1,7 @@
+DROP TABLE IF EXISTS "channel_user_links";
 DROP TABLE IF EXISTS "messages";
 DROP TABLE IF EXISTS "channels";
 DROP TABLE IF EXISTS "users";
-
-
 
 CREATE TABLE "users" (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -12,12 +11,17 @@ CREATE TABLE "users" (
 
 CREATE TABLE "channels" (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    user_1_id BIGINT REFERENCES "users"(id),
-    user_2_id BIGINT REFERENCES "users"(id)
+    name VARCHAR(255)
 );
 
-CREATE INDEX channel_user_1_id_index ON channels(user_1_id);
-CREATE INDEX channel_user_2_id_index ON channels(user_2_id);
+CREATE TABLE "channel_user_links" (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    channel_id BIGINT REFERENCES "channels"(id),
+    user_id BIGINT REFERENCES "users"(id)
+);
+
+CREATE INDEX channel_user_link_user_index ON channel_user_links(user_id);
+CREATE INDEX channel_user_link_channel_index ON channel_user_links(channel_id);
 
 CREATE TABLE "messages" (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,

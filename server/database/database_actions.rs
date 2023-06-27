@@ -120,16 +120,15 @@ impl DbManager {
     }
 
     #[allow(unused)]
-    pub async fn add_channel(
+    pub async fn add_channel(//TODO: write tests, add channel/user links
         &self,
-        user_1_id: u64,
-        user_2_id: u64,
+        name: &str,
         client: &tokio_postgres::Client,
     ) -> Result<()> {
         client
             .execute(
                 &self.commands.add_channel_statement,
-                &[&(user_1_id as i64), &(user_2_id as i64)],
+                &[&name],
             )
             .await?;
         Ok(())

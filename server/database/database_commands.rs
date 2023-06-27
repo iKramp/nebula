@@ -67,7 +67,7 @@ pub async fn add_user(client: &tokio_postgres::Client) -> Statement {
 
 pub async fn add_channel(client: &tokio_postgres::Client) -> Statement {
     match client
-        .prepare("INSERT INTO channels (user_1_id, user_2_id) VALUES ($1::int8, $2::int8)")
+        .prepare("INSERT INTO channels (name) VALUES ($1::text)")
         .await
     {
         Ok(statement) => statement,
