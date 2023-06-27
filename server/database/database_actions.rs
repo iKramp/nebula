@@ -113,6 +113,7 @@ impl DbManager {
 
     #[allow(unused)]
     pub async fn add_user(&self, username: &str, client: &tokio_postgres::Client) -> Result<()> {
+        //TODO: probably doesn't work. write tests
         client
             .execute(&self.commands.add_user_statement, &[&username])
             .await?;
@@ -121,7 +122,7 @@ impl DbManager {
 
     #[allow(unused)]
     pub async fn add_channel(
-        //TODO: write tests, add channel/user links
+        //TODO: probably doesn't work. write tests
         &self,
         name: &str,
         client: &tokio_postgres::Client,
@@ -134,6 +135,7 @@ impl DbManager {
 
     #[allow(unused)]
     pub async fn add_user_channel_link(
+        //TODO: probably doesn't work. write tests
         &self,
         user_id: u64,
         channel_id: u64,
