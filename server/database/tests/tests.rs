@@ -20,10 +20,7 @@ mod tests {
 
     async fn get_client() -> tokio_postgres::Client {
         //TODO: merge this and the normal connect_to_db functions. maybe change what is hardcoded and what is a parameter
-        let args = format!(
-                "host= user= password= dbname = {}",
-            TEST_DB
-        );
+        let args = format!("host= user= password= dbname = {}", TEST_DB);
         let f = tokio_postgres::connect(&args, NoTls).await;
         let (client, connection) = f.expect("couldn't connect");
 
@@ -96,7 +93,6 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn database_test_get_last_n_messages() {
-
         let client = get_client().await;
 
         setup_db(&client).await.unwrap();
