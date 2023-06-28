@@ -11,11 +11,15 @@ use tokio::sync::mpsc;
 
 pub struct ClientNetworking {
     stream: Option<TcpStream>,
+    unused_event_sender : Option<Sender<FromNetworkingEvent>>
 }
 
 impl ClientNetworking {
     pub const fn new() -> Self {
-        Self { stream: None }
+        Self { 
+            stream: None,
+            unused_event_sender : None
+        }
     }
 
     pub async fn manage_connection(
@@ -24,7 +28,7 @@ impl ClientNetworking {
     ) -> Result {
         let (to_event_sender, mut to_event_receiver) =
             mpsc::unbounded_channel::<ToNetworkingEvent>();
-        event_sender
+            event_sender
             .send(SenderInitialized(to_event_sender))
             .await
             .unwrap();
@@ -33,22 +37,22 @@ impl ClientNetworking {
             Some(TcpStream::connect("localhost:8080").expect("Couldnt connect to server!"));
 
         println!("Established connection");
-
+        
         loop {
             while let Some(message) = to_event_receiver.recv().await {
                 match message {
                     ToNetworkingEvent::MessageSent(msg) => {
                         //send message to yourself
                         event_sender
-                            .send(FromNetworkingEvent::Message(
-                                MessageId::new(0),
-                                Message {
-                                    contents: msg.clone(),
-                                    sender: "You".to_owned(),
-                                },
-                            ))
-                            .await
-                            .unwrap();
+                        .send(FromNetworkingEvent::Message(
+                            MessageId::new(0),
+                            Message {
+                                contents: msg.clone(),
+                                sender: "You".to_owned(),
+                            },
+                        ))
+                        .await
+                        .unwrap();
 
                         //send to server
                         self.stream
@@ -58,24 +62,8 @@ impl ClientNetworking {
                             .unwrap();
                         println!("Sending message to server,awaiting reply...");
                         //await reply
-                        let mut buf = [0; 512];
-                        let bytes_read = self.stream.as_ref().unwrap().read(&mut buf).unwrap();
-                        if bytes_read == 0 {
-                            return Ok(());
-                        }
-                        println!("Got it");
-                        event_sender
-                            .send(FromNetworkingEvent::Message(
-                                MessageId::new(0),
-                                Message {
-                                    contents: std::str::from_utf8(buf.get(..bytes_read).unwrap())
-                                        .unwrap()
-                                        .to_owned(),
-                                    sender: "Other guy".to_owned(),
-                                },
-                            ))
-                            .await
-                            .unwrap();
+                        self.listen_server(event_sender.clone()).await;
+
                         tokio::time::sleep(core::time::Duration::from_millis(10)).await;
                     }
                 }
@@ -84,7 +72,26 @@ impl ClientNetworking {
         //println!("Terminated.");
     }
 
-    //pub const fn poll_server() {}
+    pub async fn listen_server(&mut self, mut event_sender: Sender<FromNetworkingEvent>) {
+        let mut buf = [0; 512];
+        let bytes_read = self.stream.as_ref().unwrap().read(&mut buf).unwrap();
+        if bytes_read == 0 {
+            return;
+        }
+        println!("Got it");
+        event_sender
+        .send(FromNetworkingEvent::Message(
+            MessageId::new(0),
+            Message {
+                contents: std::str::from_utf8(buf.get(..bytes_read).unwrap())
+                    .unwrap()
+                    .to_owned(),
+                sender: "Other guy".to_owned(),
+            },
+        ))
+        .await
+        .unwrap();
+    }
 
     //pub const fn send_message() {}
 }
