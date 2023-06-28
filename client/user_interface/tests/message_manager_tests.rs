@@ -360,6 +360,7 @@ mod tests {
 
     #[test]
     #[allow(clippy::too_many_lines)]
+    #[allow(clippy::cognitive_complexity)]
     fn test_everything_mixed() {
         let mut manager = MessageManager::new();
         let channel_id = ChannelId::new(32_543_534);

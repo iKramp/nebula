@@ -25,10 +25,7 @@ pub struct Channel {
 
 impl Channel {
     pub fn new(id: u64, name: String) -> Self {
-        Self {
-            id,
-            name,
-        }
+        Self { id, name }
     }
 }
 

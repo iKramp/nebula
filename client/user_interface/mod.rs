@@ -5,7 +5,11 @@ mod selectable_text;
 mod tests;
 
 use crate::networking::ClientNetworking;
+use std::sync::mpsc::channel;
 
+use crate::user_interface::channel_selector::ChannelSelector;
+use crate::user_interface::chat::ChatModule;
+use iced::widget::row;
 use iced::{
     executor, subscription, window, Application, Command, Element, Result, Settings, Subscription,
     Theme,
@@ -20,7 +24,9 @@ struct NebulaApp {
     /// Module responsible for handling messages and channels
     message_manager: MessageManager,
     /// Module responsible for the chat ui.
-    chat_module: chat::ChatModule,
+    chat_module: ChatModule,
+    /// Module responsible for the channel selector ui.
+    channel_selector: ChannelSelector,
 }
 
 /// Message id is a 64 bit integer.
@@ -117,7 +123,8 @@ impl Application for NebulaApp {
             Self {
                 sender: None,
                 message_manager: MessageManager::new(),
-                chat_module: chat::ChatModule::new(),
+                chat_module: ChatModule::new(),
+                channel_selector: ChannelSelector::new(),
             },
             Command::none(),
         )
@@ -146,7 +153,8 @@ impl Application for NebulaApp {
 
     fn view(&self) -> Element<Event> {
         let chat_view = self.chat_module.view();
-        chat_view
+        let channel_selector_view = self.channel_selector.view();
+        row![channel_selector_view, chat_view].into()
     }
 
     fn theme(&self) -> Self::Theme {
