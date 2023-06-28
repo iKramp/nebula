@@ -12,6 +12,7 @@ pub struct DatabaseCommands {
     pub add_user_statement: Statement,
     pub add_channel_statement: Statement,
     pub add_user_channel_link: Statement,
+    pub get_user_channels: Statement,
 }
 
 impl DatabaseCommands {
@@ -24,6 +25,7 @@ impl DatabaseCommands {
             add_user_statement: add_user(client).await,
             add_channel_statement: add_channel(client).await,
             add_user_channel_link: add_user_channel_link(client).await,
+            get_user_channels: get_user_channels(client).await,
         }
     }
 }
@@ -83,6 +85,18 @@ pub async fn add_channel(client: &tokio_postgres::Client) -> Statement {
 pub async fn add_user_channel_link(client: &tokio_postgres::Client) -> Statement {
     match client
         .prepare("INSERT INTO channel_user_links (channel_id, user_id) VALUES ($1::int8, $2::int8) RETURNING id")
+        .await
+    {
+        Ok(statement) => statement,
+        Err(e) => {
+            panic!("failed to prepare statement: {}", e)
+        }
+    }
+}
+
+pub async fn get_user_channels(client: &tokio_postgres::Client) -> Statement {
+    match client
+        .prepare("SELECT * FROM channels AS channel WHERE EXISTS (SELECT channel_id FROM channel_user_links WHERE user_id = $1::int8 AND channel.id = channel_id)")
         .await
     {
         Ok(statement) => statement,

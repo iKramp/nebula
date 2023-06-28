@@ -23,6 +23,18 @@ fn get_message_vec(message_rows: Vec<tokio_postgres::Row>) -> Vec<data_types::Me
     message_vec
 }
 
+fn get_channel_vec(channel_rows: Vec<tokio_postgres::Row>) -> Vec<data_types::Channel> {
+    let mut channel_vec = Vec::new();
+
+    for row in channel_rows {
+        let id: i64 = row.get(0);
+        let name: String = row.get(1);
+        channel_vec.push(data_types::Channel::new(id as u64, &name))
+    }
+
+    channel_vec
+}
+
 pub struct DbManager {
     commands: database_commands::DatabaseCommands,
 }
@@ -186,5 +198,21 @@ impl DbManager {
                 anyhow::bail!("database error at adding a user-channel link")
             }
         }
+    }
+
+    #[allow(unused)]
+    pub async fn get_user_channels(
+        //TODO: probably doesn't work. write tests
+        &self,
+        user_id: u64,
+        client: &tokio_postgres::Client,
+    ) -> Result<Vec<data_types::Channel>> {
+        let res = client
+            .query(
+                &self.commands.get_user_channels,
+                &[&(user_id as i64)],
+            )
+            .await?;
+        Ok(get_channel_vec(res))
     }
 }

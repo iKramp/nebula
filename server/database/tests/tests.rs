@@ -22,7 +22,7 @@ mod tests {
         client
     }
 
-    async fn assert_equal_vectors(
+    async fn assert_equal_message_vectors(
         first_vec: Vec<data_types::Message>,
         second_vec: Vec<data_types::Message>,
     ) {
@@ -49,18 +49,18 @@ mod tests {
         let db_manager = database_actions::DbManager::new(&client).await;
 
         let message_1 = data_types::Message::new(1, 1, 1, "foo", 9741985714305981);
-        let message_2 = data_types::Message::new(1, 3, 1, "bar", 9741985714306934); //invalid user id
-        let message_3 = data_types::Message::new(1, 1, 2, "bar", 9741985714306934); //invalid channel id
+        let message_2 = data_types::Message::new(1, 4, 1, "bar", 9741985714306934); //invalid user id
+        let message_3 = data_types::Message::new(1, 1, 4, "bar", 9741985714306934); //invalid channel id
 
         let id_1 = db_manager.save_message(&message_1, &client).await.unwrap();
         let res_2 = db_manager.save_message(&message_2, &client).await;
-        let res_3 = db_manager.save_message(&message_2, &client).await;
+        let res_3 = db_manager.save_message(&message_3, &client).await;
 
         if res_2.is_ok() || res_3.is_ok() {
             panic!("this should fail due to invalid ids")
         }
 
-        assert_eq!(id_1, 6);
+        assert_eq!(id_1, 7);
     }
 
     #[tokio::test]
@@ -80,7 +80,7 @@ mod tests {
 
         let returned_vec = db_manager.get_new_messages(1, 3, &client).await.unwrap();
 
-        assert_equal_vectors(test_vec, returned_vec).await;
+        assert_equal_message_vectors(test_vec, returned_vec).await;
     }
 
     #[tokio::test]
@@ -102,7 +102,7 @@ mod tests {
         let mut returned_vec = db_manager.get_last_n_messages(1, 3, &client).await.unwrap();
         returned_vec.reverse();
 
-        assert_equal_vectors(returned_vec, test_vec).await;
+        assert_equal_message_vectors(returned_vec, test_vec).await;
     }
 
     #[tokio::test]
@@ -127,7 +127,7 @@ mod tests {
             .unwrap();
         returned_vec.reverse();
 
-        assert_equal_vectors(test_vec, returned_vec).await;
+        assert_equal_message_vectors(test_vec, returned_vec).await;
     }
 
     #[tokio::test]
@@ -144,7 +144,7 @@ mod tests {
 
         let id_1 = db_manager.add_channel(&channel_1, &client).await.unwrap();
 
-        assert_eq!(id_1, 2);
+        assert_eq!(id_1, 4);
     }
 
     #[tokio::test]
@@ -158,7 +158,7 @@ mod tests {
         let db_manager = database_actions::DbManager::new(&client).await;
 
         let user_1 = data_types::User::new(1, "foo");
-        let user_2 = data_types::User::new(1, "foo"); //name is not unique
+        let user_2 = data_types::User::new(1, "user1"); //name is not unique
 
         let id_1 = db_manager.add_user(&user_1, &client).await.unwrap();
         let res_2 = db_manager.add_user(&user_2, &client).await;
@@ -167,12 +167,18 @@ mod tests {
             panic!("this should fail due to duplicate names")
         }
 
-        assert_eq!(id_1, 3);
+        assert_eq!(id_1, 4);
     }
 
     #[tokio::test]
     #[ignore]
     async fn database_test_new_user_channel_link() {
+        //forgor to put anything here, i just copied an earlier test TODO: finish
+    }
+
+    #[tokio::test]
+    #[ignore]
+    async fn database_test_get_channels() {
         let client = get_client().await;
 
         setup_db(&client).await.unwrap();
@@ -180,16 +186,19 @@ mod tests {
 
         let db_manager = database_actions::DbManager::new(&client).await;
 
-        let user_1 = data_types::User::new(1, "foo");
-        let user_2 = data_types::User::new(1, "foo"); //name is not unique
+        let channel_1 = data_types::Channel::new(1, "channel_1");
+        let channel_2 = data_types::Channel::new(2, "channel_2");
 
-        let id_1 = db_manager.add_user(&user_1, &client).await.unwrap();
-        let res_2 = db_manager.add_user(&user_2, &client).await;
+        let test_vec = vec![channel_1, channel_2];
 
-        if res_2.is_ok() {
-            panic!("this should fail due to duplicate names")
+        let returned_vec = db_manager.get_user_channels(2, &client).await.unwrap();
+
+        assert_eq!(test_vec.len(), returned_vec.len());
+
+        for (index, message) in test_vec.iter().enumerate() {
+                let other_message = returned_vec.get(index).unwrap();
+
+                assert_eq!(message.name, other_message.name);
         }
-
-        assert_eq!(id_1, 3);
     }
 }
