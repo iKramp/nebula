@@ -1,10 +1,10 @@
+mod channel_selector;
 mod chat;
 mod message_manager;
 mod selectable_text;
 
 use crate::networking::ClientNetworking;
 
-use super::networking;
 use iced::{
     executor, subscription, window, Application, Command, Element, Result, Settings, Subscription,
     Theme,
@@ -116,7 +116,7 @@ impl Application for NebulaApp {
             Self {
                 sender: None,
                 message_manager: MessageManager::new(),
-                chat_module: chat::ChatModule::new()
+                chat_module: chat::ChatModule::new(),
             },
             Command::none(),
         )

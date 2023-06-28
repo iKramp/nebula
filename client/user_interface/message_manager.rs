@@ -29,6 +29,7 @@ impl MessageManager {
         }
     }
 
+    /// Handle an event from the networking thread.
     pub fn on_event(&mut self, event: FromNetworkingEvent) {
         match event {
             FromNetworkingEvent::SenderInitialized(_) => {} // ignore
@@ -57,5 +58,20 @@ impl MessageManager {
                     .insert(0, message);
             }
         }
+    }
+
+    /// Get refrence to all active channels.
+    pub const fn get_active_channels(&self) -> &Vec<ChannelId> {
+        &self.active_channels
+    }
+
+    /// Get channel by id.
+    pub fn get_channel_by_id(&self, id: ChannelId) -> Option<&Channel> {
+        self.channels.get(&id)
+    }
+
+    /// Get message by id.
+    pub fn get_message_by_id(&self, id: MessageId) -> Option<&Message> {
+        self.messages.get(&id)
     }
 }

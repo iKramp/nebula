@@ -1,16 +1,18 @@
-use std::io::{Read, Write,Error};
+use std::io::{Error, Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
 use std::thread;
 
-pub fn handle_client(mut stream: TcpStream) -> Result<(),Error> {
-    println!("Incoming connection from: {}",stream.peer_addr()?);
-    let mut buf = [0;512];
+pub fn handle_client(mut stream: TcpStream) -> Result<(), Error> {
+    println!("Incoming connection from: {}", stream.peer_addr()?);
+    let mut buf = [0; 512];
 
     loop {
         let bytes_read = stream.read(&mut buf)?;
-        if bytes_read == 0 { return Ok(());}
+        if bytes_read == 0 {
+            return Ok(());
+        }
         println!("Received message");
-        stream.write_all(&buf[..bytes_read])?;
+        stream.write_all(buf.get(..bytes_read).unwrap())?;
     }
 }
 
@@ -25,7 +27,7 @@ pub fn listen_for_client() {
             Ok(stream) => {
                 println!("New connection: {} ", stream.peer_addr().unwrap());
                 thread::spawn(move || {
-                    handle_client(stream).unwrap_or_else(|error| eprintln!("{:?}",error));
+                    handle_client(stream).unwrap_or_else(|error| eprintln!("{error:?}"));
                 });
             }
             Err(e) => {

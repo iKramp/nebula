@@ -63,6 +63,10 @@
 #![allow(clippy::cargo_common_metadata)]
 #![allow(clippy::missing_errors_doc)]
 #![allow(unused_imports)]
+// temporary disable some Clippy lints
+#![allow(clippy::unwrap_used)]
+#![allow(clippy::expect_used)]
+#![allow(clippy::panic)]
 use anyhow::{Ok, Result};
 use iced::futures::FutureExt;
 use std::env;
