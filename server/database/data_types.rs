@@ -16,15 +16,29 @@ impl Message {
             date_created,
         }
     }
+}
 
-    #[allow(unused)]
-    pub fn gen_params(&mut self) -> Vec<String> {
-        //doesn't work because tokio postgres is weird. i'll try to fix it so don't delete
-        vec![
-            self.user_id.to_string(),
-            self.channel_id.to_string(),
-            self.text.clone(),
-            self.date_created.to_string(),
-        ]
+pub struct Channel {
+    id: u64,
+    name: String,
+}
+
+impl Channel {
+    pub fn new(id: u64, name: String) -> Self {
+        Self {
+            id,
+            name,
+        }
+    }
+}
+
+pub struct User {
+    id: u64,
+    username: String,
+}
+
+impl User {
+    pub fn new(id: u64, username: String) -> Self {
+        Self { id, username }
     }
 }
