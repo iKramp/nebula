@@ -2,10 +2,11 @@ mod channel_selector;
 mod chat;
 mod message_manager;
 mod selectable_text;
+mod styles;
 mod tests;
 
 use crate::networking::ClientNetworking;
-use std::sync::mpsc::channel;
+use std::fmt::{Display, Formatter};
 
 use crate::user_interface::channel_selector::ChannelSelector;
 use crate::user_interface::chat::ChatModule;
@@ -119,10 +120,40 @@ impl Application for NebulaApp {
     type Flags = ();
 
     fn new(_: Self::Flags) -> (Self, Command<Event>) {
+        let mut message_manager = MessageManager::new();
+        // TODO: Remove this, this is just for testing.
+        // add some test channels to active channels
+        message_manager.on_event(FromNetworkingEvent::ChannelList(vec![
+            ChannelId::new(0),
+            ChannelId::new(1),
+            ChannelId::new(2),
+        ]));
+        message_manager.on_event(FromNetworkingEvent::Channel(
+            ChannelId::new(0),
+            Channel {
+                name: String::from("Channel 0"),
+                messages: vec![],
+            },
+        ));
+        message_manager.on_event(FromNetworkingEvent::Channel(
+            ChannelId::new(1),
+            Channel {
+                name: String::from("Channel 1"),
+                messages: vec![],
+            },
+        ));
+        message_manager.on_event(FromNetworkingEvent::Channel(
+            ChannelId::new(2),
+            Channel {
+                name: String::from("Channel 2"),
+                messages: vec![],
+            },
+        ));
+        message_manager.current_channel = Some(ChannelId::new(0));
         (
             Self {
                 sender: None,
-                message_manager: MessageManager::new(),
+                message_manager,
                 chat_module: ChatModule::new(),
                 channel_selector: ChannelSelector::new(),
             },
@@ -146,14 +177,15 @@ impl Application for NebulaApp {
         // Propagate the event to the chat module.
         let commands = vec![self
             .chat_module
-            .on_event(event, self.sender.as_mut().unwrap())];
+            .on_event(event.clone(), self.sender.as_mut().unwrap())];
+        self.channel_selector.on_event(event);
 
         Command::batch(commands)
     }
 
     fn view(&self) -> Element<Event> {
-        let chat_view = self.chat_module.view();
-        let channel_selector_view = self.channel_selector.view();
+        let chat_view = self.chat_module.view(&self.message_manager);
+        let channel_selector_view = self.channel_selector.view(&self.message_manager);
         row![channel_selector_view, chat_view].into()
     }
 

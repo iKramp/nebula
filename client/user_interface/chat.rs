@@ -1,13 +1,14 @@
 use super::selectable_text::SelectableText;
+use crate::user_interface::message_manager::MessageManager;
 use crate::user_interface::{Event, FromNetworkingEvent, Message, ToNetworkingEvent};
 use iced::widget::scrollable::{snap_to, RelativeOffset};
-use iced::widget::{column, row, scrollable, text::Text, text_input::TextInput, Column, Space};
-use iced::{theme, Alignment, Command, Element, Length};
+use iced::widget::{
+    column, row, scrollable, text::Text, text_input::TextInput, Column, Container, Space,
+};
+use iced::{theme, Alignment, Application, Command, Element, Length};
 use tokio::sync::mpsc::UnboundedSender;
 
 pub struct ChatModule {
-    /// Holds all the messages that are shown.
-    messages: Vec<Message>,
     /// Holds the id of a scrollable element that holds the messages.
     messages_scrollable_id: scrollable::Id,
     /// Holds the position of the scrollable element that holds the messages.
@@ -19,7 +20,6 @@ pub struct ChatModule {
 impl ChatModule {
     pub fn new() -> Self {
         Self {
-            messages: Vec::new(),
             messages_scrollable_id: scrollable::Id::unique(),
             messages_scroll_position: 0.0,
             current_message: String::new(),
@@ -33,7 +33,6 @@ impl ChatModule {
     ) -> Command<Event> {
         match event {
             Event::Networking(FromNetworkingEvent::Message(_id, msg)) => {
-                self.messages.push(msg);
                 if self.messages_scroll_position > 0.999 {
                     snap_to(
                         self.messages_scrollable_id.clone(),
@@ -66,16 +65,21 @@ impl ChatModule {
         }
     }
 
-    pub fn view(&self) -> Element<Event> {
+    pub fn view(&self, message_manager: &MessageManager) -> Element<Event> {
         let messages_column: Column<Event, _> = column(
-            self.messages
+            message_manager
+                .get_channel_by_id(message_manager.current_channel.unwrap())
+                .unwrap()
+                .messages
                 .iter()
-                .map(|msg| {
+                .map(|message_id| {
+                    println!("message_id: {}", message_id);
+                    let message = message_manager.get_message_by_id(*message_id).unwrap();
                     column![
-                        Text::new(msg.sender.clone()).size(15),
+                        Text::new(message.sender.clone()).size(15),
                         row![
                             Space::new(Length::Fixed(5.0), Length::Fixed(0.0)),
-                            TextInput::new("", &msg.contents)
+                            TextInput::new("", &message.contents)
                                 .on_input(|_| Event::Nothing)
                                 .size(20)
                                 .style(theme::TextInput::Custom(Box::new(SelectableText))),
