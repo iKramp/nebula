@@ -2,9 +2,14 @@ mod channel_selector;
 mod chat;
 mod message_manager;
 mod selectable_text;
+mod tests;
 
 use crate::networking::ClientNetworking;
+use std::sync::mpsc::channel;
 
+use crate::user_interface::channel_selector::ChannelSelector;
+use crate::user_interface::chat::ChatModule;
+use iced::widget::row;
 use iced::{
     executor, subscription, window, Application, Command, Element, Result, Settings, Subscription,
     Theme,
@@ -19,7 +24,9 @@ struct NebulaApp {
     /// Module responsible for handling messages and channels
     message_manager: MessageManager,
     /// Module responsible for the chat ui.
-    chat_module: chat::ChatModule,
+    chat_module: ChatModule,
+    /// Module responsible for the channel selector ui.
+    channel_selector: ChannelSelector,
 }
 
 /// Message id is a 64 bit integer.
@@ -36,7 +43,7 @@ impl MessageId {
 
 /// This is a message struct that is used to
 /// represent a message in the application.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Message {
     pub contents: String,
     pub sender: String,
@@ -58,7 +65,7 @@ impl ChannelId {
 /// represent a channel in the application. Channels
 /// are usually private messages between two users,
 /// group messages, or server messages.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Channel {
     pub name: String,
     pub messages: Vec<MessageId>,
@@ -116,7 +123,8 @@ impl Application for NebulaApp {
             Self {
                 sender: None,
                 message_manager: MessageManager::new(),
-                chat_module: chat::ChatModule::new(),
+                chat_module: ChatModule::new(),
+                channel_selector: ChannelSelector::new(),
             },
             Command::none(),
         )
@@ -145,7 +153,8 @@ impl Application for NebulaApp {
 
     fn view(&self) -> Element<Event> {
         let chat_view = self.chat_module.view();
-        chat_view
+        let channel_selector_view = self.channel_selector.view();
+        row![channel_selector_view, chat_view].into()
     }
 
     fn theme(&self) -> Self::Theme {
