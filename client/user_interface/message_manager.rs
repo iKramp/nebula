@@ -60,7 +60,7 @@ impl MessageManager {
         }
     }
 
-    /// Get refrence to all active channels.
+    /// Get reference to all active channels.
     pub const fn get_active_channels(&self) -> &Vec<ChannelId> {
         &self.active_channels
     }

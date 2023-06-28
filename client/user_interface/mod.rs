@@ -2,6 +2,7 @@ mod channel_selector;
 mod chat;
 mod message_manager;
 mod selectable_text;
+mod tests;
 
 use crate::networking::ClientNetworking;
 
@@ -36,7 +37,7 @@ impl MessageId {
 
 /// This is a message struct that is used to
 /// represent a message in the application.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Message {
     pub contents: String,
     pub sender: String,
@@ -58,7 +59,7 @@ impl ChannelId {
 /// represent a channel in the application. Channels
 /// are usually private messages between two users,
 /// group messages, or server messages.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Channel {
     pub name: String,
     pub messages: Vec<MessageId>,
