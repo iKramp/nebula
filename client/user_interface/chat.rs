@@ -73,7 +73,6 @@ impl ChatModule {
                 .messages
                 .iter()
                 .map(|message_id| {
-                    println!("message_id: {}", message_id);
                     let message = message_manager.get_message_by_id(*message_id).unwrap();
                     column![
                         Text::new(message.sender.clone()).size(15),
