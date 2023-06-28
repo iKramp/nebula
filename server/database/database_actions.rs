@@ -121,10 +121,13 @@ impl DbManager {
     }
 
     #[allow(unused)]
-    pub async fn add_user(&self, username: &str, client: &tokio_postgres::Client) -> Result<u64> {
-        //TODO: probably doesn't work. write tests
+    pub async fn add_user(
+        &self,
+        user: &data_types::User,
+        client: &tokio_postgres::Client,
+    ) -> Result<u64> {
         let res = client
-            .query(&self.commands.add_user_statement, &[&username])
+            .query(&self.commands.add_user_statement, &[&user.username])
             .await?;
         let row = res.get(0);
         match row {
@@ -140,13 +143,12 @@ impl DbManager {
 
     #[allow(unused)]
     pub async fn add_channel(
-        //TODO: probably doesn't work. write tests
         &self,
-        name: &str,
+        channel: &data_types::Channel,
         client: &tokio_postgres::Client,
     ) -> Result<u64> {
         let res = client
-            .query(&self.commands.add_channel_statement, &[&name])
+            .query(&self.commands.add_channel_statement, &[&channel.name])
             .await?;
         let row = res.get(0);
         match row {

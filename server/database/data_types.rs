@@ -20,25 +20,28 @@ impl Message {
 
 pub struct Channel {
     id: u64,
-    name: String,
+    pub name: String,
 }
 
 impl Channel {
-    pub fn new(id: u64, name: String) -> Self {
+    pub fn new(id: u64, name: &str) -> Self {
         Self {
             id,
-            name,
+            name: name.to_owned(),
         }
     }
 }
 
 pub struct User {
     id: u64,
-    username: String,
+    pub username: String,
 }
 
 impl User {
-    pub fn new(id: u64, username: String) -> Self {
-        Self { id, username }
+    pub fn new(id: u64, username: &str) -> Self {
+        Self {
+            id,
+            username: username.to_owned(),
+        }
     }
 }
