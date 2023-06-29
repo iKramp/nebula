@@ -12,7 +12,8 @@ pub fn handle_client(mut stream: TcpStream) -> Result<(), Error> {
             return Ok(());
         }
         println!("Received message");
-        stream.write_all(buf.get(..bytes_read).unwrap())?;
+        stream.write(buf.get(..bytes_read).unwrap())?;
+        println!("Echoed");
     }
 }
 
