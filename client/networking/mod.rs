@@ -1,9 +1,10 @@
 use std::io::{Read, Write};
 use std::net::TcpStream;
+use std::thread::current;
 
 use super::user_interface::{FromNetworkingEvent, ToNetworkingEvent};
 use crate::user_interface::FromNetworkingEvent::SenderInitialized;
-use crate::user_interface::{Message, MessageId};
+use crate::user_interface::{ChannelId, Message, MessageId};
 use iced::futures::channel::mpsc::Sender;
 use iced::futures::SinkExt;
 use iced::Result;
@@ -34,6 +35,8 @@ impl ClientNetworking {
 
         println!("Established connection");
 
+        let mut curr_message_id = 0;
+
         loop {
             while let Some(message) = to_event_receiver.recv().await {
                 match message {
@@ -41,7 +44,7 @@ impl ClientNetworking {
                         //send message to yourself
                         event_sender
                             .send(FromNetworkingEvent::Message(
-                                MessageId::new(0),
+                                MessageId::new(curr_message_id),
                                 Message {
                                     contents: msg.clone(),
                                     sender: "You".to_owned(),
@@ -49,6 +52,14 @@ impl ClientNetworking {
                             ))
                             .await
                             .unwrap();
+                        event_sender
+                            .send(FromNetworkingEvent::MessageReceived(
+                                ChannelId::new(0),
+                                MessageId::new(curr_message_id),
+                            ))
+                            .await
+                            .unwrap();
+                        curr_message_id += 1;
 
                         //send to server
                         self.stream
@@ -66,7 +77,7 @@ impl ClientNetworking {
                         println!("Got it");
                         event_sender
                             .send(FromNetworkingEvent::Message(
-                                MessageId::new(0),
+                                MessageId::new(curr_message_id),
                                 Message {
                                     contents: std::str::from_utf8(buf.get(..bytes_read).unwrap())
                                         .unwrap()
@@ -76,6 +87,14 @@ impl ClientNetworking {
                             ))
                             .await
                             .unwrap();
+                        event_sender
+                            .send(FromNetworkingEvent::MessageReceived(
+                                ChannelId::new(0),
+                                MessageId::new(curr_message_id),
+                            ))
+                            .await
+                            .unwrap();
+                        curr_message_id += 1;
                         tokio::time::sleep(core::time::Duration::from_millis(10)).await;
                     }
                 }

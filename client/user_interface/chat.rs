@@ -32,7 +32,7 @@ impl ChatModule {
         sender: &mut UnboundedSender<ToNetworkingEvent>,
     ) -> Command<Event> {
         match event {
-            Event::Networking(FromNetworkingEvent::Message(_id, msg)) => {
+            Event::Networking(FromNetworkingEvent::MessageReceived(_channel_id, _message_id)) => {
                 if self.messages_scroll_position > 0.999 {
                     snap_to(
                         self.messages_scrollable_id.clone(),
