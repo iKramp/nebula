@@ -1,10 +1,11 @@
 use std::io::{Read, Write};
 use std::net::TcpStream;
+use std::sync::mpsc::channel;
 use std::thread::current;
 
 use super::user_interface::{FromNetworkingEvent, ToNetworkingEvent};
 use crate::user_interface::FromNetworkingEvent::SenderInitialized;
-use crate::user_interface::{ChannelId, Message, MessageId};
+use crate::user_interface::{Channel, ChannelId, Message, MessageId};
 use iced::futures::channel::mpsc::Sender;
 use iced::futures::SinkExt;
 use iced::Result;
@@ -44,7 +45,7 @@ impl ClientNetworking {
         loop {
             while let Some(message) = to_event_receiver.recv().await {
                 match message {
-                    ToNetworkingEvent::MessageSent(msg) => {
+                    ToNetworkingEvent::MessageSent(msg, channel_id) => {
                         //send message to yourself
                         event_sender
                             .send(FromNetworkingEvent::Message(
@@ -58,7 +59,7 @@ impl ClientNetworking {
                             .unwrap();
                         event_sender
                             .send(FromNetworkingEvent::MessageReceived(
-                                ChannelId::new(0),
+                                channel_id,
                                 MessageId::new(self.curr_message_id),
                             ))
                             .await
@@ -74,7 +75,7 @@ impl ClientNetworking {
                             .unwrap();
                         println!("Sending message to server,awaiting reply...");
                         //await reply
-                        self.listen_server(event_sender.clone()).await;
+                        self.listen_server(event_sender.clone(), channel_id).await;
 
                         tokio::time::sleep(core::time::Duration::from_millis(10)).await;
                     }
@@ -84,7 +85,11 @@ impl ClientNetworking {
         //println!("Terminated.");
     }
 
-    pub async fn listen_server(&mut self, mut event_sender: Sender<FromNetworkingEvent>) {
+    pub async fn listen_server(
+        &mut self,
+        mut event_sender: Sender<FromNetworkingEvent>,
+        channel_id: ChannelId,
+    ) {
         let mut buf = [0; 512];
         let bytes_read = self.stream.as_ref().unwrap().read(&mut buf).unwrap();
         if bytes_read == 0 {
@@ -106,7 +111,7 @@ impl ClientNetworking {
 
         event_sender
             .send(FromNetworkingEvent::MessageReceived(
-                ChannelId::new(0),
+                channel_id,
                 MessageId::new(self.curr_message_id),
             ))
             .await

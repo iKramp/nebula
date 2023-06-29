@@ -27,9 +27,10 @@ impl ChannelSelector {
                         .unwrap()
                         .name
                         .clone();
-                    row![Button::new(Text::new(channel_name)).on_press(Event::Nothing)]
-                        .padding(10.0)
-                        .into()
+                    row![Button::new(Text::new(channel_name))
+                        .on_press(Event::ChannelSelected(*channel_id))]
+                    .padding(10.0)
+                    .into()
                 })
                 .collect(),
         )
@@ -42,9 +43,9 @@ impl ChannelSelector {
             .into()
     }
 
-    pub fn on_event(&mut self, event: Event) {
-        match event {
-            _ => {}
+    pub fn on_event(&mut self, event: &Event, message_manager: &mut MessageManager) {
+        if let Event::ChannelSelected(channel_id) = event {
+            message_manager.current_channel = Some(*channel_id);
         }
     }
 }

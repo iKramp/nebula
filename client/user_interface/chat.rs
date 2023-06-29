@@ -30,6 +30,7 @@ impl ChatModule {
         &mut self,
         event: Event,
         sender: &mut UnboundedSender<ToNetworkingEvent>,
+        message_manager: &MessageManager,
     ) -> Command<Event> {
         match event {
             Event::Networking(FromNetworkingEvent::MessageReceived(_channel_id, _message_id)) => {
@@ -55,7 +56,10 @@ impl ChatModule {
 
             Event::MessageSubmitted => {
                 sender
-                    .send(ToNetworkingEvent::MessageSent(self.current_message.clone()))
+                    .send(ToNetworkingEvent::MessageSent(
+                        self.current_message.clone(),
+                        message_manager.current_channel.unwrap(),
+                    ))
                     .unwrap();
                 self.current_message.clear();
                 Command::none()

@@ -83,6 +83,8 @@ pub enum Event {
     ScrollingMessages(f32),
     /// Called when the user presses the send button.
     MessageSubmitted,
+    /// Called when the user selects a channel.
+    ChannelSelected(ChannelId),
     /// Used when a function needs to return an Event, but it has nothing to return.
     Nothing,
 }
@@ -91,7 +93,7 @@ pub enum Event {
 #[derive(Debug, Clone)]
 pub enum ToNetworkingEvent {
     /// Called when the user sends a message.
-    MessageSent(String),
+    MessageSent(String, ChannelId),
 }
 
 /// These events are used to communicate from networking to ui.
@@ -174,11 +176,15 @@ impl Application for NebulaApp {
             self.message_manager.on_event(event);
         }
 
+        self.channel_selector
+            .on_event(&event, &mut self.message_manager);
+
         // Propagate the event to the chat module.
-        let commands = vec![self
-            .chat_module
-            .on_event(event.clone(), self.sender.as_mut().unwrap())];
-        self.channel_selector.on_event(event);
+        let commands = vec![self.chat_module.on_event(
+            event,
+            self.sender.as_mut().unwrap(),
+            &self.message_manager,
+        )];
 
         Command::batch(commands)
     }
