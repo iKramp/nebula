@@ -6,7 +6,6 @@ mod styles;
 mod tests;
 
 use crate::networking::ClientNetworking;
-use std::fmt::{Display, Formatter};
 
 use crate::user_interface::channel_selector::ChannelSelector;
 use crate::user_interface::chat::ChatModule;
@@ -26,8 +25,8 @@ struct NebulaApp {
     message_manager: MessageManager,
     /// Module responsible for the chat ui.
     chat_module: ChatModule,
-    /// Module responsible for the channel selector ui.
-    channel_selector: ChannelSelector,
+    // Module responsible for the channel selector ui.
+    //channel_selector: ChannelSelector, the object is not yet needed
 }
 
 /// Message id is a 64 bit integer.
@@ -157,7 +156,6 @@ impl Application for NebulaApp {
                 sender: None,
                 message_manager,
                 chat_module: ChatModule::new(),
-                channel_selector: ChannelSelector::new(),
             },
             Command::none(),
         )
@@ -176,8 +174,7 @@ impl Application for NebulaApp {
             self.message_manager.on_event(event);
         }
 
-        self.channel_selector
-            .on_event(&event, &mut self.message_manager);
+        ChannelSelector::on_event(&event, &mut self.message_manager);
 
         // Propagate the event to the chat module.
         let commands = vec![self.chat_module.on_event(
@@ -191,7 +188,7 @@ impl Application for NebulaApp {
 
     fn view(&self) -> Element<Event> {
         let chat_view = self.chat_module.view(&self.message_manager);
-        let channel_selector_view = self.channel_selector.view(&self.message_manager);
+        let channel_selector_view = ChannelSelector::view(&self.message_manager);
         row![channel_selector_view, chat_view].into()
     }
 

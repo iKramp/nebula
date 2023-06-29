@@ -1,11 +1,9 @@
 use std::io::{Read, Write};
 use std::net::TcpStream;
-use std::sync::mpsc::channel;
-use std::thread::current;
 
 use super::user_interface::{FromNetworkingEvent, ToNetworkingEvent};
 use crate::user_interface::FromNetworkingEvent::SenderInitialized;
-use crate::user_interface::{Channel, ChannelId, Message, MessageId};
+use crate::user_interface::{ChannelId, Message, MessageId};
 use iced::futures::channel::mpsc::Sender;
 use iced::futures::SinkExt;
 use iced::Result;

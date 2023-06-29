@@ -1,11 +1,9 @@
 use super::selectable_text::SelectableText;
 use crate::user_interface::message_manager::MessageManager;
-use crate::user_interface::{Event, FromNetworkingEvent, Message, ToNetworkingEvent};
+use crate::user_interface::{Event, FromNetworkingEvent, ToNetworkingEvent};
 use iced::widget::scrollable::{snap_to, RelativeOffset};
-use iced::widget::{
-    column, row, scrollable, text::Text, text_input::TextInput, Column, Container, Space,
-};
-use iced::{theme, Alignment, Application, Command, Element, Length};
+use iced::widget::{column, row, scrollable, text::Text, text_input::TextInput, Column, Space};
+use iced::{theme, Alignment, Command, Element, Length};
 use tokio::sync::mpsc::UnboundedSender;
 
 pub struct ChatModule {
