@@ -119,7 +119,7 @@ impl ClientNetworking {
                         .unwrap();
                     println!("Sending message to server,awaiting reply...");
                     //await reply
-                    self.listen_server(&event_sender, channel_id).await;
+                    self.listen_server(event_sender, channel_id).await;
                 }
             }
         }

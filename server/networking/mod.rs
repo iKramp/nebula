@@ -17,7 +17,7 @@ impl ServerNetworking {
         }
     }
 
-    pub fn handle_client(mut stream: TcpStream, db_manager: Arc<DbManager>) -> Result<(), Error> {
+    pub fn handle_client(mut stream: TcpStream, _db_manager: Arc<DbManager>) -> Result<(), Error> {
         println!("Incoming connection from: {}", stream.peer_addr()?);
         let mut buf = [0; 512];
 

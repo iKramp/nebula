@@ -16,7 +16,7 @@ pub struct DatabaseCommands {
 
 impl DatabaseCommands {
     pub async fn new(client: &tokio_postgres::Client) -> Self {
-        match DatabaseCommands::try_new(client).await {
+        match Self::try_new(client).await {
             Ok(res) => res,
             Err(e) => {
                 panic!("failed to prepare statement: {}", e)

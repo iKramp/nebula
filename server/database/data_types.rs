@@ -58,7 +58,7 @@ impl Channel {
         for row in channel_rows {
             let id: i64 = row.get(0);
             let name: String = row.get(1);
-            channel_vec.push(Self::new(id as u64, &name))
+            channel_vec.push(Self::new(id as u64, &name));
         }
 
         channel_vec
