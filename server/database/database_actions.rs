@@ -139,7 +139,7 @@ impl DbManager {
         client: &tokio_postgres::Client,
     ) -> Result<u64> {
         let res = client
-            .query(&self.commands.add_user_statement, &[&user.username])
+            .query(&self.commands.add_user_statement, &[&user.username, &user.pub_key.to_string()])
             .await?;
         let row = res.get(0);
         match row {

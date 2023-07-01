@@ -60,7 +60,7 @@ pub async fn get_n_messages_before(client: &tokio_postgres::Client) -> Statement
 
 pub async fn add_user(client: &tokio_postgres::Client) -> Statement {
     match client
-        .prepare("INSERT INTO users (name) VALUES ($1::text) RETURNING id")
+        .prepare("INSERT INTO users (name, pub_key) VALUES ($1::text, $2::text::int8) RETURNING id")
         .await
     {
         Ok(statement) => statement,

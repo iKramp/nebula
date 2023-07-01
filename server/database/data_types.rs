@@ -35,13 +35,15 @@ impl Channel {
 pub struct User {
     id: u64,
     pub username: String,
+    pub pub_key: u64,
 }
 
 impl User {
-    pub fn new(id: u64, username: &str) -> Self {
+    pub fn new(id: u64, username: &str, pub_key: u64) -> Self {
         Self {
             id,
             username: username.to_owned(),
+            pub_key
         }
     }
 }
