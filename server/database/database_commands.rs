@@ -3,15 +3,14 @@
 use tokio_postgres::Statement;
 
 pub struct DatabaseCommands {
-    //TODO i think this will get too many arguments, maybe redo?
     pub save_message_statement: Statement,
     pub get_new_messages_statement: Statement,
     pub get_last_n_messages_statement: Statement,
     pub get_n_messages_before_statement: Statement,
     pub add_user_statement: Statement,
     pub add_channel_statement: Statement,
-    pub add_user_channel_link: Statement,
-    pub get_user_channels: Statement,
+    pub add_user_channel_link_statement: Statement,
+    pub get_user_channels_statement: Statement,
 }
 
 impl DatabaseCommands {
@@ -32,8 +31,8 @@ impl DatabaseCommands {
             get_n_messages_before_statement: get_n_messages_before(client).await?,
             add_user_statement: add_user(client).await?,
             add_channel_statement: add_channel(client).await?,
-            add_user_channel_link: add_user_channel_link(client).await?,
-            get_user_channels: get_user_channels(client).await?,
+            add_user_channel_link_statement: add_user_channel_link(client).await?,
+            get_user_channels_statement: get_user_channels(client).await?,
         })
     }
 }

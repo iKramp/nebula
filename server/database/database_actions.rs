@@ -148,7 +148,7 @@ impl DbManager {
         let res = self
             .client
             .query(
-                &self.commands.add_user_channel_link,
+                &self.commands.add_user_channel_link_statement,
                 &[&(user_id as i64), &(channel_id as i64)],
             )
             .await?;
@@ -168,7 +168,7 @@ impl DbManager {
     pub async fn get_user_channels(&self, user_id: u64) -> Result<Vec<data_types::Channel>> {
         let res = self
             .client
-            .query(&self.commands.get_user_channels, &[&(user_id as i64)])
+            .query(&self.commands.get_user_channels_statement, &[&(user_id as i64)])
             .await?;
         Ok(data_types::Channel::from_db_rows(res))
     }
