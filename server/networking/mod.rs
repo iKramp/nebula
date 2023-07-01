@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::io::{Error, Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
 use std::thread;
-use std::sync::{Mutex, Arc};
+use std::sync::Arc;
 use super::database::database_actions::DbManager;
 
 pub struct ServerNetworking {
@@ -18,7 +18,7 @@ impl ServerNetworking{
         }
     }
 
-    pub fn handle_client(mut stream: TcpStream, db_manager: Arc<Mutex<DbManager>>) -> Result<(), Error> {
+    pub fn handle_client(mut stream: TcpStream, db_manager: Arc<DbManager>) -> Result<(), Error> {
         println!("Incoming connection from: {}", stream.peer_addr()?);
         let mut buf = [0; 512];
         
@@ -34,7 +34,7 @@ impl ServerNetworking{
     }
 
     pub fn listen_for_client(&mut self, db_manager: DbManager) {
-        let db_manager = Arc::new(Mutex::new(db_manager));
+        let db_manager = Arc::new(db_manager);
         //listen on port 8080
         let listener = TcpListener::bind("localhost:8080").unwrap();
         println!("Server listening on port 8080");
