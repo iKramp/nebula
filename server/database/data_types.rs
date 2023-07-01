@@ -80,5 +80,5 @@ impl User {
         }
     }
 
-    pub fn from_db_rows
+    //pub fn from_db_rows
 }
