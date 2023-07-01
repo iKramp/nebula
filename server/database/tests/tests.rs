@@ -196,9 +196,9 @@ mod tests {
         assert_eq!(test_vec.len(), returned_vec.len());
 
         for (index, message) in test_vec.iter().enumerate() {
-                let other_message = returned_vec.get(index).unwrap();
+            let other_message = returned_vec.get(index).unwrap();
 
-                assert_eq!(message.name, other_message.name);
+            assert_eq!(message.name, other_message.name);
         }
     }
 }

@@ -139,7 +139,10 @@ impl DbManager {
         client: &tokio_postgres::Client,
     ) -> Result<u64> {
         let res = client
-            .query(&self.commands.add_user_statement, &[&user.username, &user.pub_key.to_string()])
+            .query(
+                &self.commands.add_user_statement,
+                &[&user.username, &user.pub_key.to_string()],
+            )
             .await?;
         let row = res.get(0);
         match row {
@@ -208,10 +211,7 @@ impl DbManager {
         client: &tokio_postgres::Client,
     ) -> Result<Vec<data_types::Channel>> {
         let res = client
-            .query(
-                &self.commands.get_user_channels,
-                &[&(user_id as i64)],
-            )
+            .query(&self.commands.get_user_channels, &[&(user_id as i64)])
             .await?;
         Ok(get_channel_vec(res))
     }

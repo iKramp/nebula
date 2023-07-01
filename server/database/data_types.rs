@@ -43,7 +43,7 @@ impl User {
         Self {
             id,
             username: username.to_owned(),
-            pub_key
+            pub_key,
         }
     }
 }

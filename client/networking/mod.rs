@@ -4,9 +4,9 @@ use std::net::TcpStream;
 use super::user_interface::{FromNetworkingEvent, ToNetworkingEvent};
 use crate::user_interface::FromNetworkingEvent::SenderInitialized;
 use crate::user_interface::{ChannelId, Message, MessageId};
-use tokio::sync::mpsc;
-use tokio::sync::mpsc::{unbounded_channel,UnboundedReceiver,Sender};
 use iced::Result;
+use tokio::sync::mpsc;
+use tokio::sync::mpsc::{unbounded_channel, Sender, UnboundedReceiver};
 
 pub struct ClientNetworking {
     stream: Option<TcpStream>,
@@ -32,20 +32,17 @@ impl ClientNetworking {
             .await
             .unwrap();
 
-
-
         self.stream =
             Some(TcpStream::connect("localhost:8080").expect("Couldnt connect to server!"));
 
         println!("Established connection");
-        let tmp : ChannelId = ChannelId{
-            id : 1
-        };
+        let tmp: ChannelId = ChannelId { id: 1 };
 
         loop {
-            self.send_message(&event_sender,&mut to_event_receiver).await;
+            self.send_message(&event_sender, &mut to_event_receiver)
+                .await;
             self.listen_server(&event_sender, tmp).await;
-            tokio::time::sleep(core::time::Duration::from_millis(10)).await;    
+            tokio::time::sleep(core::time::Duration::from_millis(10)).await;
         }
 
         //println!("Terminated.");
@@ -85,7 +82,11 @@ impl ClientNetworking {
         self.curr_message_id += 1;
     }
 
-    pub async fn send_message(&mut self, event_sender : &Sender<FromNetworkingEvent>, to_event_receiver : &mut UnboundedReceiver<ToNetworkingEvent>) {
+    pub async fn send_message(
+        &mut self,
+        event_sender: &Sender<FromNetworkingEvent>,
+        to_event_receiver: &mut UnboundedReceiver<ToNetworkingEvent>,
+    ) {
         while let Some(message) = to_event_receiver.recv().await {
             match message {
                 ToNetworkingEvent::MessageSent(msg, channel_id) => {
@@ -122,6 +123,5 @@ impl ClientNetworking {
                 }
             }
         }
-
     }
 }
