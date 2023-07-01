@@ -16,6 +16,27 @@ impl Message {
             date_created,
         }
     }
+
+    pub fn from_db_rows(message_rows: Vec<tokio_postgres::Row>) -> Vec<Self> {
+        let mut message_vec = Vec::new();
+
+        //this can panic, but it should if anything is wrong so we know immediately
+        for row in message_rows {
+            let id: i64 = row.get(0);
+            let user_id: i64 = row.get(1);
+            let channel_id: i64 = row.get(2);
+            let text: String = row.get(3);
+            let date_created: i64 = row.get(4);
+            message_vec.push(Self::new(
+                id as u64,
+                user_id as u64,
+                channel_id as u64,
+                &text,
+                date_created as u64,
+            ));
+        }
+        message_vec
+    }
 }
 
 pub struct Channel {
@@ -29,6 +50,18 @@ impl Channel {
             id,
             name: name.to_owned(),
         }
+    }
+
+    pub fn from_db_rows(channel_rows: Vec<tokio_postgres::Row>) -> Vec<Self> {
+        let mut channel_vec = Vec::new();
+
+        for row in channel_rows {
+            let id: i64 = row.get(0);
+            let name: String = row.get(1);
+            channel_vec.push(Self::new(id as u64, &name))
+        }
+
+        channel_vec
     }
 }
 
@@ -46,4 +79,6 @@ impl User {
             pub_key,
         }
     }
+
+    pub fn from_db_rows
 }

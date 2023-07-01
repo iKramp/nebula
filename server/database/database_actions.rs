@@ -2,39 +2,6 @@ use super::data_types;
 use super::database_commands;
 use anyhow::{Ok, Result};
 
-fn get_message_vec(message_rows: Vec<tokio_postgres::Row>) -> Vec<data_types::Message> {
-    let mut message_vec = Vec::new();
-
-    //this can panic, but it should if anything is wrong so we know immediately
-    for row in message_rows {
-        let id: i64 = row.get(0);
-        let user_id: i64 = row.get(1);
-        let channel_id: i64 = row.get(2);
-        let text: String = row.get(3);
-        let date_created: i64 = row.get(4);
-        message_vec.push(data_types::Message::new(
-            id as u64,
-            user_id as u64,
-            channel_id as u64,
-            &text,
-            date_created as u64,
-        ));
-    }
-    message_vec
-}
-
-fn get_channel_vec(channel_rows: Vec<tokio_postgres::Row>) -> Vec<data_types::Channel> {
-    let mut channel_vec = Vec::new();
-
-    for row in channel_rows {
-        let id: i64 = row.get(0);
-        let name: String = row.get(1);
-        channel_vec.push(data_types::Channel::new(id as u64, &name))
-    }
-
-    channel_vec
-}
-
 pub struct DbManager {
     commands: database_commands::DatabaseCommands,
 }
@@ -89,7 +56,7 @@ impl DbManager {
             )
             .await?;
 
-        Ok(get_message_vec(rows))
+        Ok(data_types::Message::from_db_rows(rows))
     }
 
     #[allow(unused)]
@@ -105,7 +72,7 @@ impl DbManager {
                 &[&(channel_id as i64), &(number_of_messages as i64)],
             )
             .await?;
-        let mut vec = get_message_vec(rows);
+        let mut vec = data_types::Message::from_db_rows(rows);
         Ok(vec)
     }
 
@@ -128,7 +95,7 @@ impl DbManager {
             )
             .await?;
 
-        let vec = get_message_vec(rows);
+        let vec = data_types::Message::from_db_rows(rows);
         Ok(vec)
     }
 
@@ -205,7 +172,6 @@ impl DbManager {
 
     #[allow(unused)]
     pub async fn get_user_channels(
-        //TODO: probably doesn't work. write tests
         &self,
         user_id: u64,
         client: &tokio_postgres::Client,
@@ -213,6 +179,6 @@ impl DbManager {
         let res = client
             .query(&self.commands.get_user_channels, &[&(user_id as i64)])
             .await?;
-        Ok(get_channel_vec(res))
+        Ok(data_types::Channel::from_db_rows(res))
     }
 }
