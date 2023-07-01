@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use std::io::{Error, Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
 use std::thread;
+use std::sync::{Mutex, Arc};
+use super::database::database_actions::DbManager;
 
 pub struct ServerNetworking {
    // channels: HashMap<u64, Vec<TcpStream>>,
@@ -16,7 +18,7 @@ impl ServerNetworking{
         }
     }
 
-    pub fn handle_client(&mut self, mut stream: TcpStream) -> Result<(), Error> {
+    pub fn handle_client(mut stream: TcpStream, db_manager: Arc<Mutex<DbManager>>) -> Result<(), Error> {
         println!("Incoming connection from: {}", stream.peer_addr()?);
         let mut buf = [0; 512];
         
@@ -31,7 +33,8 @@ impl ServerNetworking{
         }
     }
 
-    pub fn listen_for_client(&mut self) {
+    pub fn listen_for_client(&mut self, db_manager: DbManager) {
+        let db_manager = Arc::new(Mutex::new(db_manager));
         //listen on port 8080
         let listener = TcpListener::bind("localhost:8080").unwrap();
         println!("Server listening on port 8080");
@@ -42,8 +45,9 @@ impl ServerNetworking{
                 Ok(stream) => {
                     println!("New connection: {} ", stream.peer_addr().unwrap());
                     //self.clients.push(stream.try_clone().unwrap());
+                    let temp = db_manager.clone();
                     thread::spawn(move || {
-                        self.handle_client(stream).unwrap_or_else(|error| eprintln!("{error:?}"));
+                        Self::handle_client(stream, temp).unwrap_or_else(|error| eprintln!("{error:?}"));
                     });
                 }
                 Err(e) => {
