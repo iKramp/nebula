@@ -4,10 +4,9 @@ use std::net::TcpStream;
 use super::user_interface::{FromNetworkingEvent, ToNetworkingEvent};
 use crate::user_interface::FromNetworkingEvent::SenderInitialized;
 use crate::user_interface::{ChannelId, Message, MessageId};
-use iced::futures::channel::mpsc::{Sender, UnboundedReceiver};
-use iced::futures::SinkExt;
-use iced::Result;
 use tokio::sync::mpsc;
+use tokio::sync::mpsc::{unbounded_channel,UnboundedReceiver,Sender};
+use iced::Result;
 
 pub struct ClientNetworking {
     stream: Option<TcpStream>,
@@ -44,8 +43,8 @@ impl ClientNetworking {
         };
 
         loop {
-            self.send_message(event_sender,to_event_receiver).await;
-            self.listen_server(event_sender, tmp).await;
+            self.send_message(&event_sender,&mut to_event_receiver).await;
+            self.listen_server(&event_sender, tmp).await;
             tokio::time::sleep(core::time::Duration::from_millis(10)).await;    
         }
 
@@ -54,7 +53,7 @@ impl ClientNetworking {
 
     pub async fn listen_server(
         &mut self,
-        mut event_sender: Sender<FromNetworkingEvent>,
+        event_sender: &Sender<FromNetworkingEvent>,
         channel_id: ChannelId,
     ) {
         let mut buf = [0; 512];
@@ -86,7 +85,7 @@ impl ClientNetworking {
         self.curr_message_id += 1;
     }
 
-    pub async fn send_message(&mut self, event_sender : Sender<FromNetworkingEvent>, mut to_event_receiver : UnboundedReceiver<ToNetworkingEvent>) {
+    pub async fn send_message(&mut self, event_sender : &Sender<FromNetworkingEvent>, to_event_receiver : &mut UnboundedReceiver<ToNetworkingEvent>) {
         while let Some(message) = to_event_receiver.recv().await {
             match message {
                 ToNetworkingEvent::MessageSent(msg, channel_id) => {
@@ -119,7 +118,7 @@ impl ClientNetworking {
                         .unwrap();
                     println!("Sending message to server,awaiting reply...");
                     //await reply
-                    self.listen_server(event_sender.clone(), channel_id).await;
+                    self.listen_server(&event_sender, channel_id).await;
                 }
             }
         }
