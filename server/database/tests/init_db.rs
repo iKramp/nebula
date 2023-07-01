@@ -17,23 +17,13 @@ pub mod init_db {
 
     pub async fn populate_db(client: &tokio_postgres::Client) -> anyhow::Result<()> {
         let str = super::init_db::get_populate_db_commands()?;
-
-        let commands = str.split(';');
-
-        for command in commands {
-            let _res = client.execute(command, &[]).await?;
-        }
+        client.batch_execute(&str).await?;
         Ok(())
     }
 
     pub async fn setup_db(client: &tokio_postgres::Client) -> anyhow::Result<()> {
         let str = super::init_db::get_setup_db_commands()?;
-
-        let commands = str.split(';');
-
-        for command in commands {
-            let _res = client.execute(command, &[]).await?;
-        }
+        client.batch_execute(&str).await?;
         Ok(())
     }
 }
