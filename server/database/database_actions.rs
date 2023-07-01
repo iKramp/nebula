@@ -1,6 +1,7 @@
 use super::data_types;
 use super::database_commands;
 use anyhow::{Ok, Result};
+use crate::database::data_types::FromDbRows;
 
 pub struct DbManager {
     commands: database_commands::DatabaseCommands,

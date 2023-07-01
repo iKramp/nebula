@@ -1,3 +1,7 @@
+pub trait FromDbRows {
+    fn from_db_rows(rows: Vec<tokio_postgres::Row>) -> Vec<Self> where Self: Sized;
+}
+
 pub struct Message {
     pub id: u64,
     pub user_id: u64,
@@ -16,9 +20,11 @@ impl Message {
             date_created,
         }
     }
+}
 
-    pub fn from_db_rows(message_rows: Vec<tokio_postgres::Row>) -> Vec<Self> {
-        let mut message_vec = Vec::new();
+impl FromDbRows for Message {
+    fn from_db_rows(message_rows: Vec<tokio_postgres::Row>) -> Vec<Self> {
+        let mut message_vec: Vec<Message> = Vec::new();
 
         //this can panic, but it should if anything is wrong so we know immediately
         for row in message_rows {
@@ -51,8 +57,10 @@ impl Channel {
             name: name.to_owned(),
         }
     }
+}
 
-    pub fn from_db_rows(channel_rows: Vec<tokio_postgres::Row>) -> Vec<Self> {
+impl FromDbRows for Channel {
+    fn from_db_rows(channel_rows: Vec<tokio_postgres::Row>) -> Vec<Self> {
         let mut channel_vec = Vec::new();
 
         for row in channel_rows {
@@ -79,8 +87,10 @@ impl User {
             pub_key,
         }
     }
+}
 
-    pub fn from_db_rows(user_rows: Vec<tokio_postgres::Row>) -> Vec<Self> {
+impl FromDbRows for User {
+     fn from_db_rows(user_rows: Vec<tokio_postgres::Row>) -> Vec<Self> {
         let mut user_vec = Vec::new();
 
         for row in user_rows {
