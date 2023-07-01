@@ -52,7 +52,7 @@ pub struct Message {
 /// Channel id is a 64 bit integer.
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct ChannelId {
-    id: u64,
+    pub id: u64,
 }
 
 impl ChannelId {
@@ -204,7 +204,7 @@ impl Application for NebulaApp {
             100,
             |sender| async move {
                 let mut net = ClientNetworking::new();
-                net.manage_connection(sender).await.unwrap();
+                //net.manage_connection(sender).await.unwrap();
                 panic!("Networking worker died");
             },
         )
