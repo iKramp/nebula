@@ -4,7 +4,7 @@ use anyhow::{Ok, Result};
 
 pub struct DbManager {
     commands: database_commands::DatabaseCommands,
-    client: tokio_postgres::Client
+    client: tokio_postgres::Client,
 }
 
 impl DbManager {
@@ -16,11 +16,9 @@ impl DbManager {
     }
 
     #[allow(unused)]
-    pub async fn save_message(
-        &self,
-        message: &data_types::Message,
-    ) -> Result<u64> {
-        let res = self.client
+    pub async fn save_message(&self, message: &data_types::Message) -> Result<u64> {
+        let res = self
+            .client
             .query(
                 &self.commands.save_message_statement,
                 &[
@@ -49,7 +47,8 @@ impl DbManager {
         channel_id: u64,
         last_message_id: u64,
     ) -> Result<Vec<data_types::Message>> {
-        let rows = self.client
+        let rows = self
+            .client
             .query(
                 &self.commands.get_new_messages_statement,
                 &[&(channel_id as i64), &(last_message_id as i64)],
@@ -65,7 +64,8 @@ impl DbManager {
         channel_id: u64,
         number_of_messages: u8, //ye let's not allow big numbers
     ) -> Result<Vec<data_types::Message>> {
-        let rows = self.client
+        let rows = self
+            .client
             .query(
                 &self.commands.get_last_n_messages_statement,
                 &[&(channel_id as i64), &(number_of_messages as i64)],
@@ -82,7 +82,8 @@ impl DbManager {
         before_message_id: u64,
         number_of_messages: u8,
     ) -> Result<Vec<data_types::Message>> {
-        let rows = self.client
+        let rows = self
+            .client
             .query(
                 &self.commands.get_n_messages_before_statement,
                 &[
@@ -98,11 +99,9 @@ impl DbManager {
     }
 
     #[allow(unused)]
-    pub async fn add_user(
-        &self,
-        user: &data_types::User,
-    ) -> Result<u64> {
-        let res = self.client
+    pub async fn add_user(&self, user: &data_types::User) -> Result<u64> {
+        let res = self
+            .client
             .query(
                 &self.commands.add_user_statement,
                 &[&user.username, &user.pub_key.to_string()],
@@ -121,11 +120,9 @@ impl DbManager {
     }
 
     #[allow(unused)]
-    pub async fn add_channel(
-        &self,
-        channel: &data_types::Channel,
-    ) -> Result<u64> {
-        let res = self.client
+    pub async fn add_channel(&self, channel: &data_types::Channel) -> Result<u64> {
+        let res = self
+            .client
             .query(&self.commands.add_channel_statement, &[&channel.name])
             .await?;
         let row = res.get(0);
@@ -147,7 +144,8 @@ impl DbManager {
         user_id: u64,
         channel_id: u64,
     ) -> Result<u64> {
-        let res = self.client
+        let res = self
+            .client
             .query(
                 &self.commands.add_user_channel_link,
                 &[&(user_id as i64), &(channel_id as i64)],
@@ -166,11 +164,9 @@ impl DbManager {
     }
 
     #[allow(unused)]
-    pub async fn get_user_channels(
-        &self,
-        user_id: u64,
-    ) -> Result<Vec<data_types::Channel>> {
-        let res = self.client
+    pub async fn get_user_channels(&self, user_id: u64) -> Result<Vec<data_types::Channel>> {
+        let res = self
+            .client
             .query(&self.commands.get_user_channels, &[&(user_id as i64)])
             .await?;
         Ok(data_types::Channel::from_db_rows(res))

@@ -121,10 +121,7 @@ mod tests {
             data_types::Message::new(4, 2, 1, "Random text 4", 1687249040004),
         ];
 
-        let mut returned_vec = db_manager
-            .get_n_messages_before(1, 5, 3)
-            .await
-            .unwrap();
+        let mut returned_vec = db_manager.get_n_messages_before(1, 5, 3).await.unwrap();
         returned_vec.reverse();
 
         assert_equal_message_vectors(test_vec, returned_vec).await;

@@ -1,27 +1,26 @@
+use super::database::database_actions::DbManager;
 use std::collections::HashMap;
 use std::io::{Error, Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
-use std::thread;
 use std::sync::Arc;
-use super::database::database_actions::DbManager;
+use std::thread;
 
 pub struct ServerNetworking {
-   // channels: HashMap<u64, Vec<TcpStream>>,
-    clients : Vec<TcpStream>,
+    // channels: HashMap<u64, Vec<TcpStream>>,
+    clients: Vec<TcpStream>,
 }
 
-
-impl ServerNetworking{
+impl ServerNetworking {
     pub const fn new() -> Self {
-        Self{
-            clients : Vec::new(),
+        Self {
+            clients: Vec::new(),
         }
     }
 
     pub fn handle_client(mut stream: TcpStream, db_manager: Arc<DbManager>) -> Result<(), Error> {
         println!("Incoming connection from: {}", stream.peer_addr()?);
         let mut buf = [0; 512];
-        
+
         loop {
             let bytes_read = stream.read(&mut buf)?;
             if bytes_read == 0 {
@@ -47,7 +46,8 @@ impl ServerNetworking{
                     //self.clients.push(stream.try_clone().unwrap());
                     let temp = db_manager.clone();
                     thread::spawn(move || {
-                        Self::handle_client(stream, temp).unwrap_or_else(|error| eprintln!("{error:?}"));
+                        Self::handle_client(stream, temp)
+                            .unwrap_or_else(|error| eprintln!("{error:?}"));
                     });
                 }
                 Err(e) => {
@@ -59,5 +59,4 @@ impl ServerNetworking{
         println!("Stopping listening");
         drop(listener);
     }
-
 }
