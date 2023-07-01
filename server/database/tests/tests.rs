@@ -157,8 +157,8 @@ mod tests {
 
         let db_manager = database_actions::DbManager::new(&client).await;
 
-        let user_1 = data_types::User::new(1, "foo");
-        let user_2 = data_types::User::new(1, "user1"); //name is not unique
+        let user_1 = data_types::User::new(1, "foo", 1);
+        let user_2 = data_types::User::new(1, "user1", 2); //name is not unique
 
         let id_1 = db_manager.add_user(&user_1, &client).await.unwrap();
         let res_2 = db_manager.add_user(&user_2, &client).await;

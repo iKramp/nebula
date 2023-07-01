@@ -5,18 +5,19 @@ DROP TABLE IF EXISTS "users";
 
 CREATE TABLE "users" (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    name VARCHAR(255) UNIQUE
+    name VARCHAR(255) UNIQUE NOT NULL,
+    pub_key BIGINT NOT NULL
 );
 
 CREATE TABLE "channels" (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    name VARCHAR(255)
+    name VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE "channel_user_links" (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    channel_id BIGINT REFERENCES "channels"(id),
-    user_id BIGINT REFERENCES "users"(id)
+    channel_id BIGINT REFERENCES "channels"(id) NOT NULL,
+    user_id BIGINT REFERENCES "users"(id) NOT NULL
 );
 
 CREATE INDEX channel_user_link_user_index ON channel_user_links(user_id);
@@ -24,10 +25,10 @@ CREATE INDEX channel_user_link_channel_index ON channel_user_links(channel_id);
 
 CREATE TABLE "messages" (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    user_id BIGINT REFERENCES "users"(id),
-    channel_id BIGINT REFERENCES channels(id),
-    text TEXT,
-    date_created BIGINT
+    user_id BIGINT REFERENCES "users"(id) NOT NULL,
+    channel_id BIGINT REFERENCES channels(id) NOT NULL,
+    text TEXT NOT NULL,
+    date_created BIGINT NOT NULL
 );
 
 CREATE INDEX message_channel_id_index ON messages(channel_id);
