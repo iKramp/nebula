@@ -80,5 +80,16 @@ impl User {
         }
     }
 
-    //pub fn from_db_rows
+    pub fn from_db_rows(user_rows: Vec<tokio_postgres::Row>) -> Vec<Self> {
+        let mut user_vec = Vec::new();
+
+        for row in user_rows {
+            let id: i64 = row.get(0);
+            let username: String = row.get(1);
+            let pub_key: i64 = row.get(2);
+            user_vec.push(Self::new(id as u64, &username, pub_key as u64));
+        }
+
+        user_vec
+    }
 }
