@@ -4,14 +4,13 @@ use std::net::TcpStream;
 use super::user_interface::{FromNetworkingEvent, ToNetworkingEvent};
 use crate::user_interface::FromNetworkingEvent::SenderInitialized;
 use crate::user_interface::{ChannelId, Message, MessageId};
-use iced::futures::channel::mpsc::Sender;
+use iced::futures::channel::mpsc::{Sender, UnboundedReceiver};
 use iced::futures::SinkExt;
 use iced::Result;
 use tokio::sync::mpsc;
 
 pub struct ClientNetworking {
     stream: Option<TcpStream>,
-    unused_event_sender: Option<Sender<FromNetworkingEvent>>,
     curr_message_id: u64,
 }
 
@@ -19,7 +18,6 @@ impl ClientNetworking {
     pub const fn new() -> Self {
         Self {
             stream: None,
-            unused_event_sender: None,
             curr_message_id: 0,
         }
     }
@@ -35,51 +33,22 @@ impl ClientNetworking {
             .await
             .unwrap();
 
+
+
         self.stream =
             Some(TcpStream::connect("localhost:8080").expect("Couldnt connect to server!"));
 
         println!("Established connection");
+        let tmp : ChannelId = ChannelId{
+            id : 1
+        };
 
         loop {
-            while let Some(message) = to_event_receiver.recv().await {
-                match message {
-                    ToNetworkingEvent::MessageSent(msg, channel_id) => {
-                        //send message to yourself
-                        event_sender
-                            .send(FromNetworkingEvent::Message(
-                                MessageId::new(self.curr_message_id),
-                                Message {
-                                    contents: msg.clone(),
-                                    sender: "You".to_owned(),
-                                },
-                            ))
-                            .await
-                            .unwrap();
-                        event_sender
-                            .send(FromNetworkingEvent::MessageReceived(
-                                channel_id,
-                                MessageId::new(self.curr_message_id),
-                            ))
-                            .await
-                            .unwrap();
-
-                        self.curr_message_id += 1;
-
-                        //send to server
-                        self.stream
-                            .as_ref()
-                            .unwrap()
-                            .write_all(msg.as_bytes())
-                            .unwrap();
-                        println!("Sending message to server,awaiting reply...");
-                        //await reply
-                        self.listen_server(event_sender.clone(), channel_id).await;
-
-                        tokio::time::sleep(core::time::Duration::from_millis(10)).await;
-                    }
-                }
-            }
+            self.send_message(event_sender,to_event_receiver).await;
+            self.listen_server(event_sender, tmp).await;
+            tokio::time::sleep(core::time::Duration::from_millis(10)).await;    
         }
+
         //println!("Terminated.");
     }
 
@@ -117,5 +86,43 @@ impl ClientNetworking {
         self.curr_message_id += 1;
     }
 
-    //pub const fn send_message() {}
+    pub async fn send_message(&mut self, event_sender : Sender<FromNetworkingEvent>, mut to_event_receiver : UnboundedReceiver<ToNetworkingEvent>) {
+        while let Some(message) = to_event_receiver.recv().await {
+            match message {
+                ToNetworkingEvent::MessageSent(msg, channel_id) => {
+                    //send message to yourself
+                    event_sender
+                        .send(FromNetworkingEvent::Message(
+                            MessageId::new(self.curr_message_id),
+                            Message {
+                                contents: msg.clone(),
+                                sender: "You".to_owned(),
+                            },
+                        ))
+                        .await
+                        .unwrap();
+                    event_sender
+                        .send(FromNetworkingEvent::MessageReceived(
+                            channel_id,
+                            MessageId::new(self.curr_message_id),
+                        ))
+                        .await
+                        .unwrap();
+
+                    self.curr_message_id += 1;
+
+                    //send to server
+                    self.stream
+                        .as_ref()
+                        .unwrap()
+                        .write_all(msg.as_bytes())
+                        .unwrap();
+                    println!("Sending message to server,awaiting reply...");
+                    //await reply
+                    self.listen_server(event_sender.clone(), channel_id).await;
+                }
+            }
+        }
+
+    }
 }

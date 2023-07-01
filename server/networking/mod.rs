@@ -1,6 +1,12 @@
 use std::io::{Error, Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
 use std::thread;
+use std::collections::HashMap;
+
+struct ServerNetworking{
+    channels : HashMap<String,Vec<String>>
+}
+
 
 pub fn handle_client(mut stream: TcpStream) -> Result<(), Error> {
     println!("Incoming connection from: {}", stream.peer_addr()?);
