@@ -4,7 +4,8 @@ use std::io::{Error, Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
 use std::sync::Arc;
 use std::thread;
-use super::database::data_types::User;
+use super::database::{data_types::User, database_actions::QerryReturnType};
+use anyhow::Result;
 
 pub struct ServerNetworking {
     // channels: HashMap<u64, Vec<TcpStream>>,
@@ -20,6 +21,7 @@ impl ServerNetworking {
 
     pub fn handle_client(mut stream: TcpStream, _db_manager: Arc<DbManager>) -> Result<(), Error> {
         println!("Incoming connection from: {}", stream.peer_addr()?);
+        let mut querries_vec: Vec<std::boxed::Box<tokio::task::JoinHandle<Result<QerryReturnType>>>>;//when a request is sent from the client, spawn a task, save it here and loop through this and return the data when a task finishes
         let mut buf = [0; 512];
         let mut _user: Option<User> = None; //I leave this here to remind you that as soon as the initial connection is made, packets containing the public keys should be sent.
                                             //This also implies user authentication and thus we can be sure which user is on this connection. For all future networking the
