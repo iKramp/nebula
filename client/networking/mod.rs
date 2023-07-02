@@ -23,13 +23,12 @@ impl ClientNetworking {
 
     pub async fn manage_connection(
         &mut self,
-        mut event_sender: Sender<FromNetworkingEvent>,
+        mut event_sender: iced::futures::channel::mpsc::Sender<FromNetworkingEvent>,
     ) -> Result {
         let (to_event_sender, mut to_event_receiver) =
             mpsc::unbounded_channel::<ToNetworkingEvent>();
         event_sender
-            .send(SenderInitialized(to_event_sender))
-            .await
+            .try_send(SenderInitialized(to_event_sender))
             .unwrap();
 
         self.stream =
@@ -39,9 +38,9 @@ impl ClientNetworking {
         let tmp: ChannelId = ChannelId { id: 1 };
 
         loop {
-            self.send_message(&event_sender, &mut to_event_receiver)
+            self.send_message(&mut event_sender, &mut to_event_receiver)
                 .await;
-            self.listen_server(&event_sender, tmp).await;
+            self.listen_server(&mut event_sender, tmp).await;
             tokio::time::sleep(core::time::Duration::from_millis(10)).await;
         }
 
@@ -50,7 +49,7 @@ impl ClientNetworking {
 
     pub async fn listen_server(
         &mut self,
-        event_sender: &Sender<FromNetworkingEvent>,
+        event_sender: &mut iced::futures::channel::mpsc::Sender<FromNetworkingEvent>,
         channel_id: ChannelId,
     ) {
         let mut buf = [0; 512];
@@ -60,7 +59,7 @@ impl ClientNetworking {
         }
         println!("Got it");
         event_sender
-            .send(FromNetworkingEvent::Message(
+            .try_send(FromNetworkingEvent::Message(
                 MessageId::new(self.curr_message_id),
                 Message {
                     contents: std::str::from_utf8(buf.get(..bytes_read).unwrap())
@@ -69,22 +68,20 @@ impl ClientNetworking {
                     sender: "Other guy".to_owned(),
                 },
             ))
-            .await
             .unwrap();
 
         event_sender
-            .send(FromNetworkingEvent::MessageReceived(
+            .try_send(FromNetworkingEvent::MessageReceived(
                 channel_id,
                 MessageId::new(self.curr_message_id),
             ))
-            .await
             .unwrap();
         self.curr_message_id += 1;
     }
 
     pub async fn send_message(
         &mut self,
-        event_sender: &Sender<FromNetworkingEvent>,
+        event_sender: &mut iced::futures::channel::mpsc::Sender<FromNetworkingEvent>,
         to_event_receiver: &mut UnboundedReceiver<ToNetworkingEvent>,
     ) {
         while let Some(message) = to_event_receiver.recv().await {
@@ -92,21 +89,19 @@ impl ClientNetworking {
                 ToNetworkingEvent::MessageSent(msg, channel_id) => {
                     //send message to yourself
                     event_sender
-                        .send(FromNetworkingEvent::Message(
+                        .try_send(FromNetworkingEvent::Message(
                             MessageId::new(self.curr_message_id),
                             Message {
                                 contents: msg.clone(),
                                 sender: "You".to_owned(),
                             },
                         ))
-                        .await
                         .unwrap();
                     event_sender
-                        .send(FromNetworkingEvent::MessageReceived(
+                        .try_send(FromNetworkingEvent::MessageReceived(
                             channel_id,
                             MessageId::new(self.curr_message_id),
                         ))
-                        .await
                         .unwrap();
 
                     self.curr_message_id += 1;

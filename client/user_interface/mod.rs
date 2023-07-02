@@ -204,7 +204,7 @@ impl Application for NebulaApp {
             100,
             |sender| async move {
                 let mut net = ClientNetworking::new();
-                //net.manage_connection(sender).await.unwrap(); TODO: uncomment and fix
+                net.manage_connection(sender).await.unwrap();// TODO: uncomment and fix
                 panic!("Networking worker died");
             },
         )
