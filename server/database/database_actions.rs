@@ -1,14 +1,14 @@
 use super::data_types;
 use super::database_commands;
-use anyhow::{Ok, Result};
 use crate::database::data_types::FromDbRows;
+use anyhow::{Ok, Result};
 
 pub enum QerryReturnType {
     None,
     U64(u64),
     Messages(Vec<data_types::Message>),
     Channels(Vec<data_types::Channel>),
-    Users(Vec<data_types::User>)
+    Users(Vec<data_types::User>),
 }
 
 pub struct DbManager {
@@ -38,7 +38,9 @@ impl DbManager {
                 ],
             )
             .await?;
-        let row = res.get(0).ok_or(anyhow::format_err!("Database error at adding message"))?;
+        let row = res
+            .get(0)
+            .ok_or(anyhow::format_err!("Database error at adding message"))?;
         Ok(QerryReturnType::U64(row.try_get::<_, i64>(0)? as u64))
     }
 
@@ -55,8 +57,9 @@ impl DbManager {
                 &[&(channel_id as i64), &(last_message_id as i64)],
             )
             .await?;
-
-        Ok(QerryReturnType::Messages(data_types::Message::from_db_rows(rows)))
+        Ok(QerryReturnType::Messages(
+            data_types::Message::from_db_rows(rows)?,
+        ))
     }
 
     #[allow(unused)]
@@ -72,8 +75,9 @@ impl DbManager {
                 &[&(channel_id as i64), &(number_of_messages as i64)],
             )
             .await?;
-        let vec = data_types::Message::from_db_rows(rows);
-        Ok(QerryReturnType::Messages(vec))
+        Ok(QerryReturnType::Messages(
+            data_types::Message::from_db_rows(rows)?,
+        ))
     }
 
     #[allow(unused)]
@@ -94,9 +98,9 @@ impl DbManager {
                 ],
             )
             .await?;
-
-        let vec = data_types::Message::from_db_rows(rows);
-        Ok(QerryReturnType::Messages(vec))
+        Ok(QerryReturnType::Messages(
+            data_types::Message::from_db_rows(rows)?,
+        ))
     }
 
     #[allow(unused)]
@@ -108,7 +112,9 @@ impl DbManager {
                 &[&user.username, &user.pub_key.to_string()],
             )
             .await?;
-        let row = res.get(0).ok_or(anyhow::format_err!("Database error at adding user"))?;
+        let row = res
+            .get(0)
+            .ok_or(anyhow::format_err!("Database error at adding user"))?;
         Ok(QerryReturnType::U64(row.try_get::<_, i64>(0)? as u64))
     }
 
@@ -118,7 +124,9 @@ impl DbManager {
             .client
             .query(&self.commands.add_channel_statement, &[&channel.name])
             .await?;
-        let row = res.get(0).ok_or(anyhow::format_err!("Database error at adding channel"))?;
+        let row = res
+            .get(0)
+            .ok_or(anyhow::format_err!("Database error at adding channel"))?;
         Ok(QerryReturnType::U64(row.try_get::<_, i64>(0)? as u64))
     }
 
@@ -136,7 +144,9 @@ impl DbManager {
                 &[&(user_id as i64), &(channel_id as i64)],
             )
             .await?;
-        let row = res.get(0).ok_or(anyhow::format_err!("Database error at adding link"))?;
+        let row = res
+            .get(0)
+            .ok_or(anyhow::format_err!("Database error at adding link"))?;
         Ok(QerryReturnType::U64(row.try_get::<_, i64>(0)? as u64))
     }
 
@@ -144,8 +154,13 @@ impl DbManager {
     pub async fn get_user_channels(&self, user_id: u64) -> Result<QerryReturnType> {
         let res = self
             .client
-            .query(&self.commands.get_user_channels_statement, &[&(user_id as i64)])
+            .query(
+                &self.commands.get_user_channels_statement,
+                &[&(user_id as i64)],
+            )
             .await?;
-        Ok(QerryReturnType::Channels(data_types::Channel::from_db_rows(res)))
+        Ok(QerryReturnType::Channels(
+            data_types::Channel::from_db_rows(res)?,
+        ))
     }
 }

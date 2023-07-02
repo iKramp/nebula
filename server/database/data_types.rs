@@ -1,5 +1,9 @@
+use anyhow::Result;
+
 pub trait FromDbRows {
-    fn from_db_rows(rows: Vec<tokio_postgres::Row>) -> Vec<Self> where Self: Sized;
+    fn from_db_rows(rows: Vec<tokio_postgres::Row>) -> Result<Vec<Self>>
+    where
+        Self: Sized;
 }
 
 pub struct Message {
@@ -23,16 +27,15 @@ impl Message {
 }
 
 impl FromDbRows for Message {
-    fn from_db_rows(message_rows: Vec<tokio_postgres::Row>) -> Vec<Self> {
+    fn from_db_rows(message_rows: Vec<tokio_postgres::Row>) -> Result<Vec<Self>> {
         let mut message_vec: Vec<Message> = Vec::new();
 
-        //this can panic, but it should if anything is wrong so we know immediately
         for row in message_rows {
-            let id: i64 = row.get(0);
-            let user_id: i64 = row.get(1);
-            let channel_id: i64 = row.get(2);
-            let text: String = row.get(3);
-            let date_created: i64 = row.get(4);
+            let id: i64 = row.try_get(0)?;
+            let user_id: i64 = row.try_get(1)?;
+            let channel_id: i64 = row.try_get(2)?;
+            let text: String = row.try_get(3)?;
+            let date_created: i64 = row.try_get(4)?;
             message_vec.push(Self::new(
                 id as u64,
                 user_id as u64,
@@ -41,7 +44,7 @@ impl FromDbRows for Message {
                 date_created as u64,
             ));
         }
-        message_vec
+        Ok(message_vec)
     }
 }
 
@@ -60,16 +63,16 @@ impl Channel {
 }
 
 impl FromDbRows for Channel {
-    fn from_db_rows(channel_rows: Vec<tokio_postgres::Row>) -> Vec<Self> {
+    fn from_db_rows(channel_rows: Vec<tokio_postgres::Row>) -> Result<Vec<Self>> {
         let mut channel_vec = Vec::new();
 
         for row in channel_rows {
-            let id: i64 = row.get(0);
-            let name: String = row.get(1);
+            let id: i64 = row.try_get(0)?;
+            let name: String = row.try_get(1)?;
             channel_vec.push(Self::new(id as u64, &name));
         }
 
-        channel_vec
+        Ok(channel_vec)
     }
 }
 
@@ -90,16 +93,16 @@ impl User {
 }
 
 impl FromDbRows for User {
-     fn from_db_rows(user_rows: Vec<tokio_postgres::Row>) -> Vec<Self> {
+    fn from_db_rows(user_rows: Vec<tokio_postgres::Row>) -> Result<Vec<Self>> {
         let mut user_vec = Vec::new();
 
         for row in user_rows {
-            let id: i64 = row.get(0);
-            let username: String = row.get(1);
-            let pub_key: i64 = row.get(2);
+            let id: i64 = row.try_get(0)?;
+            let username: String = row.try_get(1)?;
+            let pub_key: i64 = row.try_get(2)?;
             user_vec.push(Self::new(id as u64, &username, pub_key as u64));
         }
 
-        user_vec
+        Ok(user_vec)
     }
 }

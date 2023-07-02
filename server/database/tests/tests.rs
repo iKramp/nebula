@@ -52,15 +52,18 @@ mod tests {
         let message_2 = data_types::Message::new(1, 4, 1, "bar", 9741985714306934); //invalid user id
         let message_3 = data_types::Message::new(1, 1, 4, "bar", 9741985714306934); //invalid channel id
 
-        let id_1 = db_manager.save_message(&message_1).await.unwrap();
+        let res_1 = db_manager.save_message(&message_1).await.unwrap();
         let res_2 = db_manager.save_message(&message_2).await;
         let res_3 = db_manager.save_message(&message_3).await;
 
         if res_2.is_ok() || res_3.is_ok() {
             panic!("this should fail due to invalid ids")
         }
-
-        assert_eq!(id_1, 7);
+        if let database_actions::QerryReturnType::U64(id_1) = res_1 {
+            assert_eq!(id_1, 7);
+        } else {
+            panic!("wrong return type");
+        }
     }
 
     #[tokio::test]
@@ -80,7 +83,11 @@ mod tests {
 
         let returned_vec = db_manager.get_new_messages(1, 3).await.unwrap();
 
-        assert_equal_message_vectors(test_vec, returned_vec).await;
+        if let database_actions::QerryReturnType::Messages(returned_vec) = returned_vec {
+            assert_equal_message_vectors(test_vec, returned_vec).await;
+        } else {
+            panic!("wrong return type");
+        }
     }
 
     #[tokio::test]
@@ -100,9 +107,13 @@ mod tests {
         ];
 
         let mut returned_vec = db_manager.get_last_n_messages(1, 3).await.unwrap();
-        returned_vec.reverse();
 
-        assert_equal_message_vectors(returned_vec, test_vec).await;
+        if let database_actions::QerryReturnType::Messages(mut returned_vec) = returned_vec {
+            returned_vec.reverse();
+            assert_equal_message_vectors(returned_vec, test_vec).await;
+        } else {
+            panic!("wrong return type");
+        }
     }
 
     #[tokio::test]
@@ -122,9 +133,13 @@ mod tests {
         ];
 
         let mut returned_vec = db_manager.get_n_messages_before(1, 5, 3).await.unwrap();
-        returned_vec.reverse();
 
-        assert_equal_message_vectors(test_vec, returned_vec).await;
+        if let database_actions::QerryReturnType::Messages(mut returned_vec) = returned_vec {
+            returned_vec.reverse();
+            assert_equal_message_vectors(test_vec, returned_vec).await;
+        } else {
+            panic!("wrong return type");
+        }
     }
 
     #[tokio::test]
@@ -139,9 +154,13 @@ mod tests {
 
         let channel_1 = data_types::Channel::new(1, "foo");
 
-        let id_1 = db_manager.add_channel(&channel_1).await.unwrap();
+        let res_1 = db_manager.add_channel(&channel_1).await.unwrap();
 
-        assert_eq!(id_1, 4);
+        if let database_actions::QerryReturnType::U64(id_1) = res_1 {
+            assert_eq!(id_1, 4);
+        } else {
+            panic!("wrong return type");
+        }
     }
 
     #[tokio::test]
@@ -157,14 +176,18 @@ mod tests {
         let user_1 = data_types::User::new(1, "foo", 1);
         let user_2 = data_types::User::new(1, "user1", 2); //name is not unique
 
-        let id_1 = db_manager.add_user(&user_1).await.unwrap();
+        let res_1 = db_manager.add_user(&user_1).await.unwrap();
         let res_2 = db_manager.add_user(&user_2).await;
 
         if res_2.is_ok() {
             panic!("this should fail due to duplicate names")
         }
 
-        assert_eq!(id_1, 4);
+        if let database_actions::QerryReturnType::U64(id_1) = res_1 {
+            assert_eq!(id_1, 4);
+        } else {
+            panic!("wrong return type");
+        }
     }
 
     #[tokio::test]
@@ -190,12 +213,16 @@ mod tests {
 
         let returned_vec = db_manager.get_user_channels(2).await.unwrap();
 
-        assert_eq!(test_vec.len(), returned_vec.len());
+        if let database_actions::QerryReturnType::Channels(returned_vec) = returned_vec {
+            assert_eq!(test_vec.len(), returned_vec.len());
 
-        for (index, message) in test_vec.iter().enumerate() {
-            let other_message = returned_vec.get(index).unwrap();
+            for (index, channel) in test_vec.iter().enumerate() {
+                let other_channel = returned_vec.get(index).unwrap();
 
-            assert_eq!(message.name, other_message.name);
+                assert_eq!(channel.name, other_channel.name);
+            }
+        } else {
+            panic!("wrong return type");
         }
     }
 }
