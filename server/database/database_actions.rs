@@ -38,16 +38,8 @@ impl DbManager {
                 ],
             )
             .await?;
-        let row = res.get(0);
-        match row {
-            Some(row) => {
-                let id: i64 = row.try_get(0)?;
-                Ok(QerryReturnType::U64(id as u64))
-            }
-            None => {
-                anyhow::bail!("database error at saving a message")
-            }
-        }
+        let row = res.get(0).ok_or(anyhow::format_err!("Database error at adding message"))?;
+        Ok(QerryReturnType::U64(row.try_get::<_, i64>(0)? as u64))
     }
 
     #[allow(unused)]
@@ -116,16 +108,8 @@ impl DbManager {
                 &[&user.username, &user.pub_key.to_string()],
             )
             .await?;
-        let row = res.get(0);
-        match row {
-            Some(row) => {
-                let id: i64 = row.try_get(0)?;
-                Ok(QerryReturnType::U64(id as u64))
-            }
-            None => {
-                anyhow::bail!("database error at adding a user")
-            }
-        }
+        let row = res.get(0).ok_or(anyhow::format_err!("Database error at adding user"))?;
+        Ok(QerryReturnType::U64(row.try_get::<_, i64>(0)? as u64))
     }
 
     #[allow(unused)]
@@ -134,16 +118,8 @@ impl DbManager {
             .client
             .query(&self.commands.add_channel_statement, &[&channel.name])
             .await?;
-        let row = res.get(0);
-        match row {
-            Some(row) => {
-                let id: i64 = row.try_get(0)?;
-                Ok(QerryReturnType::U64(id as u64))
-            }
-            None => {
-                anyhow::bail!("database error at adding a channel")
-            }
-        }
+        let row = res.get(0).ok_or(anyhow::format_err!("Database error at adding channel"))?;
+        Ok(QerryReturnType::U64(row.try_get::<_, i64>(0)? as u64))
     }
 
     #[allow(unused)]
@@ -160,16 +136,8 @@ impl DbManager {
                 &[&(user_id as i64), &(channel_id as i64)],
             )
             .await?;
-        let row = res.get(0);
-        match row {
-            Some(row) => {
-                let id: i64 = row.try_get(0)?;
-                Ok(QerryReturnType::U64(id as u64))
-            }
-            None => {
-                anyhow::bail!("database error at adding a user-channel link")
-            }
-        }
+        let row = res.get(0).ok_or(anyhow::format_err!("Database error at adding link"))?;
+        Ok(QerryReturnType::U64(row.try_get::<_, i64>(0)? as u64))
     }
 
     #[allow(unused)]
