@@ -3,6 +3,14 @@ use super::database_commands;
 use anyhow::{Ok, Result};
 use crate::database::data_types::FromDbRows;
 
+pub enum QerryReturnType {
+    None,
+    U64(u64),
+    Messages(Vec<data_types::Message>),
+    Channels(Vec<data_types::Channel>),
+    Users(Vec<data_types::User>)
+}
+
 pub struct DbManager {
     commands: database_commands::DatabaseCommands,
     client: tokio_postgres::Client,
@@ -17,7 +25,7 @@ impl DbManager {
     }
 
     #[allow(unused)]
-    pub async fn save_message(&self, message: &data_types::Message) -> Result<u64> {
+    pub async fn save_message(&self, message: &data_types::Message) -> Result<QerryReturnType> {
         let res = self
             .client
             .query(
@@ -34,7 +42,7 @@ impl DbManager {
         match row {
             Some(row) => {
                 let id: i64 = row.try_get(0)?;
-                Ok(id as u64)
+                Ok(QerryReturnType::U64(id as u64))
             }
             None => {
                 anyhow::bail!("database error at saving a message")
@@ -47,7 +55,7 @@ impl DbManager {
         &self,
         channel_id: u64,
         last_message_id: u64,
-    ) -> Result<Vec<data_types::Message>> {
+    ) -> Result<QerryReturnType> {
         let rows = self
             .client
             .query(
@@ -56,7 +64,7 @@ impl DbManager {
             )
             .await?;
 
-        Ok(data_types::Message::from_db_rows(rows))
+        Ok(QerryReturnType::Messages(data_types::Message::from_db_rows(rows)))
     }
 
     #[allow(unused)]
@@ -64,7 +72,7 @@ impl DbManager {
         &self,
         channel_id: u64,
         number_of_messages: u8, //ye let's not allow big numbers
-    ) -> Result<Vec<data_types::Message>> {
+    ) -> Result<QerryReturnType> {
         let rows = self
             .client
             .query(
@@ -72,8 +80,8 @@ impl DbManager {
                 &[&(channel_id as i64), &(number_of_messages as i64)],
             )
             .await?;
-        let mut vec = data_types::Message::from_db_rows(rows);
-        Ok(vec)
+        let vec = data_types::Message::from_db_rows(rows);
+        Ok(QerryReturnType::Messages(vec))
     }
 
     #[allow(unused)]
@@ -82,7 +90,7 @@ impl DbManager {
         channel_id: u64,
         before_message_id: u64,
         number_of_messages: u8,
-    ) -> Result<Vec<data_types::Message>> {
+    ) -> Result<QerryReturnType> {
         let rows = self
             .client
             .query(
@@ -96,11 +104,11 @@ impl DbManager {
             .await?;
 
         let vec = data_types::Message::from_db_rows(rows);
-        Ok(vec)
+        Ok(QerryReturnType::Messages(vec))
     }
 
     #[allow(unused)]
-    pub async fn add_user(&self, user: &data_types::User) -> Result<u64> {
+    pub async fn add_user(&self, user: &data_types::User) -> Result<QerryReturnType> {
         let res = self
             .client
             .query(
@@ -112,7 +120,7 @@ impl DbManager {
         match row {
             Some(row) => {
                 let id: i64 = row.try_get(0)?;
-                Ok(id as u64)
+                Ok(QerryReturnType::U64(id as u64))
             }
             None => {
                 anyhow::bail!("database error at adding a user")
@@ -121,7 +129,7 @@ impl DbManager {
     }
 
     #[allow(unused)]
-    pub async fn add_channel(&self, channel: &data_types::Channel) -> Result<u64> {
+    pub async fn add_channel(&self, channel: &data_types::Channel) -> Result<QerryReturnType> {
         let res = self
             .client
             .query(&self.commands.add_channel_statement, &[&channel.name])
@@ -130,7 +138,7 @@ impl DbManager {
         match row {
             Some(row) => {
                 let id: i64 = row.try_get(0)?;
-                Ok(id as u64)
+                Ok(QerryReturnType::U64(id as u64))
             }
             None => {
                 anyhow::bail!("database error at adding a channel")
@@ -144,7 +152,7 @@ impl DbManager {
         &self,
         user_id: u64,
         channel_id: u64,
-    ) -> Result<u64> {
+    ) -> Result<QerryReturnType> {
         let res = self
             .client
             .query(
@@ -156,7 +164,7 @@ impl DbManager {
         match row {
             Some(row) => {
                 let id: i64 = row.try_get(0)?;
-                Ok(id as u64)
+                Ok(QerryReturnType::U64(id as u64))
             }
             None => {
                 anyhow::bail!("database error at adding a user-channel link")
@@ -165,11 +173,11 @@ impl DbManager {
     }
 
     #[allow(unused)]
-    pub async fn get_user_channels(&self, user_id: u64) -> Result<Vec<data_types::Channel>> {
+    pub async fn get_user_channels(&self, user_id: u64) -> Result<QerryReturnType> {
         let res = self
             .client
             .query(&self.commands.get_user_channels_statement, &[&(user_id as i64)])
             .await?;
-        Ok(data_types::Channel::from_db_rows(res))
+        Ok(QerryReturnType::Channels(data_types::Channel::from_db_rows(res)))
     }
 }
