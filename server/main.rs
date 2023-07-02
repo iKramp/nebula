@@ -67,6 +67,7 @@
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::expect_used)]
 #![allow(clippy::panic)]
+extern crate alloc;
 use anyhow::{Ok, Result};
 use iced::futures::FutureExt;
 use std::env;

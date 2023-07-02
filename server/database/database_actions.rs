@@ -40,7 +40,7 @@ impl DbManager {
             .await?;
         let row = res
             .get(0)
-            .ok_or(anyhow::format_err!("Database error at adding message"))?;
+            .ok_or_else(|| anyhow::format_err!("Database error at adding message"))?;
         Ok(QerryReturnType::U64(row.try_get::<_, i64>(0)? as u64))
     }
 
@@ -114,7 +114,7 @@ impl DbManager {
             .await?;
         let row = res
             .get(0)
-            .ok_or(anyhow::format_err!("Database error at adding user"))?;
+            .ok_or_else(|| anyhow::format_err!("Database error at adding user"))?;
         Ok(QerryReturnType::U64(row.try_get::<_, i64>(0)? as u64))
     }
 
@@ -126,7 +126,7 @@ impl DbManager {
             .await?;
         let row = res
             .get(0)
-            .ok_or(anyhow::format_err!("Database error at adding channel"))?;
+            .ok_or_else(|| anyhow::format_err!("Database error at adding channel"))?;
         Ok(QerryReturnType::U64(row.try_get::<_, i64>(0)? as u64))
     }
 
@@ -146,7 +146,7 @@ impl DbManager {
             .await?;
         let row = res
             .get(0)
-            .ok_or(anyhow::format_err!("Database error at adding link"))?;
+            .ok_or_else(|| anyhow::format_err!("Database error at adding link"))?;
         Ok(QerryReturnType::U64(row.try_get::<_, i64>(0)? as u64))
     }
 

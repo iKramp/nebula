@@ -1,10 +1,10 @@
 use super::database::database_actions::DbManager;
 use super::database::{data_types::User, database_actions::QerryReturnType};
+use alloc::sync::Arc;
 use anyhow::Result;
 use std::collections::HashMap;
 use std::io::{Error, Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
-use std::sync::Arc;
 use std::thread;
 
 pub struct ServerNetworking {
@@ -19,10 +19,10 @@ impl ServerNetworking {
         }
     }
 
-    pub fn handle_client(mut stream: TcpStream, _db_manager: Arc<DbManager>) -> Result<(), Error> {
+    pub fn handle_client(mut stream: TcpStream, _db_manager: Arc<DbManager>) -> Result<()> {
         println!("Incoming connection from: {}", stream.peer_addr()?);
-        let mut querries_vec: Vec<
-            std::boxed::Box<tokio::task::JoinHandle<Result<QerryReturnType>>>,
+        let mut _querries_vec: Vec<
+            alloc::boxed::Box<tokio::task::JoinHandle<Result<QerryReturnType>>>,
         >; //when a request is sent from the client, spawn a task, save it here and loop through this and return the data when a task finishes
         let mut buf = [0; 512];
         let mut _user: Option<User> = None; //I leave this here to remind you that as soon as the initial connection is made, packets containing the public keys should be sent.
@@ -35,7 +35,7 @@ impl ServerNetworking {
                 return Ok(());
             }
             println!("Received message");
-            stream.write_all(buf.get(..bytes_read).unwrap())?;
+            stream.write_all(buf.get(..bytes_read).ok_or(anyhow::anyhow!("err"))?)?;
             println!("Echoed");
         }
     }

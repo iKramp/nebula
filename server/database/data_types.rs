@@ -28,7 +28,7 @@ impl Message {
 
 impl FromDbRows for Message {
     fn from_db_rows(message_rows: Vec<tokio_postgres::Row>) -> Result<Vec<Self>> {
-        let mut message_vec: Vec<Message> = Vec::new();
+        let mut message_vec: Vec<Self> = Vec::new();
 
         for row in message_rows {
             let id: i64 = row.try_get(0)?;
