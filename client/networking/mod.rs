@@ -2,6 +2,7 @@ use std::io::{Read, Write};
 use std::net::TcpStream;
 
 use super::user_interface::{FromNetworkingEvent, ToNetworkingEvent};
+use crate::networking;
 use crate::user_interface::FromNetworkingEvent::SenderInitialized;
 use crate::user_interface::{ChannelId, Message, MessageId};
 use iced::Result;
@@ -21,6 +22,17 @@ impl ClientNetworking {
         }
     }
 
+    fn request_id(&mut self) -> u8 {
+        println!("requesting id...");
+        let msg = [1;1];
+        self.stream
+            .as_ref()
+            .unwrap()
+            .write_all(&msg);
+        let m= self.read_from_server();
+        m[0]
+    }
+
     pub async fn manage_connection(
         &mut self,
         mut event_sender: iced::futures::channel::mpsc::Sender<FromNetworkingEvent>,
@@ -36,33 +48,34 @@ impl ClientNetworking {
 
         println!("Established connection");
         let tmp: ChannelId = ChannelId { id: 1 };
+        let my_id = self.request_id();
+        println!("my id is {:}", &my_id);
 
         loop {
             self.send_message(&mut event_sender, &mut to_event_receiver)
                 .await;
-            self.listen_server(&mut event_sender, tmp).await;
+            //self.get_new_messages(&mut event_sender, tmp).await;
             tokio::time::sleep(core::time::Duration::from_millis(10)).await;
         }
 
         //println!("Terminated.");
     }
 
-    pub async fn listen_server(
+    pub async fn get_new_messages(
         &mut self,
         event_sender: &mut iced::futures::channel::mpsc::Sender<FromNetworkingEvent>,
         channel_id: ChannelId,
     ) {
-        let mut buf = [0; 512];
-        let bytes_read = self.stream.as_ref().unwrap().read(&mut buf).unwrap();
-        if bytes_read == 0 {
-            return;
-        }
+
+        let msg = self.read_from_server();
+
+
         println!("Got it");
         event_sender
             .try_send(FromNetworkingEvent::Message(
                 MessageId::new(self.curr_message_id),
                 Message {
-                    contents: std::str::from_utf8(buf.get(..bytes_read).unwrap())
+                    contents: std::str::from_utf8(&msg)
                         .unwrap()
                         .to_owned(),
                     sender: "Other guy".to_owned(),
@@ -78,6 +91,13 @@ impl ClientNetworking {
             .unwrap();
         self.curr_message_id += 1;
     }
+
+    fn read_from_server(&mut self) -> Vec<u8>{
+        let mut buf = [0; 2048];
+        let bytes_read = self.stream.as_ref().unwrap().read(&mut buf).unwrap();
+        buf[..bytes_read].to_vec()
+    }
+
 
     pub async fn send_message(
         &mut self,
@@ -112,9 +132,7 @@ impl ClientNetworking {
                         .unwrap()
                         .write_all(msg.as_bytes())
                         .unwrap();
-                    println!("Sending message to server,awaiting reply...");
-                    //await reply
-                    self.listen_server(event_sender, channel_id).await;
+                    println!("Sending message to server...");
                 }
             }
         }
