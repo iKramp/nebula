@@ -64,14 +64,6 @@ impl ServerNetworking {
                     tman.save_message(&msg).await
                 });
                 querries_vec.push(std::boxed::Box::new(handle));
-
-                /*_db_manager.save_message(&crate::database::data_types::Message { 
-                    id: 1,
-                    user_id: client_id, 
-                    channel_id: 1, 
-                    text: str::from_utf8(&buf[..bytes_read]).unwrap().to_string(), 
-                    date_created: 1 
-                });*/
             }
             else if buf[0] == 3{
                 
