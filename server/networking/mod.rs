@@ -60,7 +60,7 @@ impl ServerNetworking {
                     date_created: 1 
                 };
                 let tman = _db_manager.clone();
-                let handle: tokio::task::JoinHandle<Result<QerryReturnType>> = tokio::spawn(async move {
+                let handle = tokio::spawn(async move {
                     tman.save_message(&msg).await
                 });
                 querries_vec.push(std::boxed::Box::new(handle));
