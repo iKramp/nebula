@@ -1,3 +1,5 @@
+use crate::database::database_commands::save_message;
+
 use super::database::database_actions::DbManager;
 use super::database::{data_types::User, database_actions::QerryReturnType};
 use alloc::sync::Arc;
@@ -20,7 +22,7 @@ impl ServerNetworking {
         }
     }
 
-    pub fn handle_client(mut stream: TcpStream, _db_manager: Arc<DbManager>, client_id : u8) -> Result<()> {
+    pub fn handle_client(mut stream: TcpStream, _db_manager: Arc<DbManager>, client_id : u64) -> Result<()> {
         println!("Incoming connection from: {}", stream.peer_addr()?);
         let mut _querries_vec: Vec<
             alloc::boxed::Box<tokio::task::JoinHandle<Result<QerryReturnType>>>,
@@ -44,10 +46,24 @@ impl ServerNetworking {
             // 2 - client sends a message 
             // 3 - client wants new messages ig
             if buf[0] == 1 {
-                println!("dbg1");
+                println!("returning id");
                 stream.write_all(&client_id.to_be_bytes());
             }
-            
+            else if buf[0] == 2{
+                println!("saving message");
+                // needs async?
+                /*_db_manager.save_message(&crate::database::data_types::Message { 
+                    id: 1,
+                    user_id: client_id, 
+                    channel_id: 1, 
+                    text: str::from_utf8(&buf[..bytes_read]).unwrap().to_string(), 
+                    date_created: 1 
+                });*/
+            }
+            else if buf[0] == 3{
+                
+
+            }
         }
     }
     
