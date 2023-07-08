@@ -83,6 +83,8 @@ async fn main() -> Result<()> {
     let client = database::connect_to_db("nebula").await?;
     let db_manager = database::database_actions::DbManager::new(client).await;
     let mut net = ServerNetworking::new();
+    let rt = tokio::runtime::Builder::new_multi_thread().enable_all().build().unwrap();
+    let _ = rt.enter();
     net.listen_for_client(db_manager);
 
     println!("finished executing");

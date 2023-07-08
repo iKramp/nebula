@@ -129,10 +129,13 @@ impl ClientNetworking {
                     self.curr_message_id += 1;
 
                     //send to server
+                    let mut buf = Vec::new();
+                    buf.push(2 as u8);//id of sending a message
+                    buf.append(&mut msg.as_bytes().to_vec());
                     self.stream
                         .as_ref()
                         .unwrap()
-                        .write_all(msg.as_bytes())
+                        .write_all(&buf)
                         .unwrap();
                     println!("Sending message to server...");
                 }
