@@ -24,9 +24,9 @@ impl ServerNetworking {
 
     pub fn handle_client(mut stream: TcpStream, _db_manager: Arc<DbManager>, client_id : u64) -> Result<()> {
         println!("Incoming connection from: {}", stream.peer_addr()?);
-        let mut _querries_vec: Vec<
+        let mut querries_vec: Vec<
             alloc::boxed::Box<tokio::task::JoinHandle<Result<QerryReturnType>>>,
-        >; //when a request is sent from the client, spawn a task, save it here and loop through this and return the data when a task finishes
+        > = Vec::new(); //when a request is sent from the client, spawn a task, save it here and loop through this and return the data when a task finishes
         let mut buf = [0; 512];
         let mut _user: Option<User> = None; //I leave this here to remind you that as soon as the initial connection is made, packets containing the public keys should be sent.
                                             //This also implies user authentication and thus we can be sure which user is on this connection. For all future networking the
@@ -60,12 +60,11 @@ impl ServerNetworking {
                     date_created: 1 
                 };
                 let tman = _db_manager.clone();
-                tokio::spawn(async move {
-                    let tmp = tman.save_message(&msg);
-                    tmp.await;
-                    println!("saved message");
+                let handle: tokio::task::JoinHandle<Result<QerryReturnType>> = tokio::spawn(async move {
+                    tman.save_message(&msg).await
                 });
-                
+                querries_vec.push(std::boxed::Box::new(handle));
+
                 /*_db_manager.save_message(&crate::database::data_types::Message { 
                     id: 1,
                     user_id: client_id, 
@@ -97,7 +96,7 @@ impl ServerNetworking {
                     //self.clients.push(stream.try_clone().unwrap());
                     let temp = db_manager.clone();
                     thread::spawn(move || {
-                        Self::handle_client(stream, temp,client_cnt)
+                        Self::handle_client(stream, temp, client_cnt)
                             .unwrap_or_else(|error| eprintln!("{error:?}"));
                     });
                 }
