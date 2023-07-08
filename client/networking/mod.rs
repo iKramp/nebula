@@ -12,6 +12,7 @@ use tokio::sync::mpsc::{unbounded_channel, Sender, UnboundedReceiver};
 pub struct ClientNetworking {
     stream: Option<TcpStream>,
     curr_message_id: u64,
+    id : u8
 }
 
 impl ClientNetworking {
@@ -19,6 +20,7 @@ impl ClientNetworking {
         Self {
             stream: None,
             curr_message_id: 0,
+            id : 0,
         }
     }
 
@@ -48,8 +50,8 @@ impl ClientNetworking {
 
         println!("Established connection");
         let tmp: ChannelId = ChannelId { id: 1 };
-        let my_id = self.request_id();
-        println!("my id is {:}", &my_id);
+        self.id = self.request_id();
+        println!("my id is {:}", &self.id);
 
         loop {
             self.send_message(&mut event_sender, &mut to_event_receiver)
@@ -113,7 +115,7 @@ impl ClientNetworking {
                             MessageId::new(self.curr_message_id),
                             Message {
                                 contents: msg.clone(),
-                                sender: "You".to_owned(),
+                                sender: self.id.to_string(),
                             },
                         ))
                         .unwrap();
