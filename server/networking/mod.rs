@@ -56,7 +56,7 @@ impl ServerNetworking {
                     id: 1,
                     user_id: client_id, 
                     channel_id: 1, 
-                    text: str::from_utf8(&buf[..bytes_read]).unwrap().to_string(), 
+                    text: str::from_utf8(&buf[1..bytes_read]).unwrap().to_string(), 
                     date_created: 1 
                 };
                 let tman = _db_manager.clone();
