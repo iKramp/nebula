@@ -22,7 +22,7 @@ impl ServerNetworking {
         }
     }
 
-    pub fn handle_client(mut stream: TcpStream, _db_manager: Arc<DbManager>, client_id : u64) -> Result<()> {
+    pub async fn handle_client(mut stream: TcpStream, _db_manager: Arc<DbManager>, client_id : u64) -> Result<()> {
         println!("Incoming connection from: {}", stream.peer_addr()?);
         let mut querries_vec: Vec<
             alloc::boxed::Box<tokio::task::JoinHandle<Result<QerryReturnType>>>,
@@ -63,7 +63,9 @@ impl ServerNetworking {
                 let handle = tokio::spawn(async move {
                     tman.save_message(&msg).await
                 });
-                querries_vec.push(std::boxed::Box::new(handle));
+                let (res, ) = tokio::join!(handle);
+                let res = res.unwrap().unwrap();
+                //querries_vec.push(std::boxed::Box::new(handle));
             }
             else if buf[0] == 3{
                 
@@ -72,7 +74,7 @@ impl ServerNetworking {
         }
     }
     
-    pub fn listen_for_client(&mut self, db_manager: DbManager) {
+    pub async fn listen_for_client(&mut self, db_manager: DbManager) {
         let db_manager = Arc::new(db_manager);
         //listen on port 8080
         let listener = TcpListener::bind("localhost:8080").unwrap();
@@ -87,9 +89,8 @@ impl ServerNetworking {
                     println!("New connection: {} ", stream.peer_addr().unwrap());
                     //self.clients.push(stream.try_clone().unwrap());
                     let temp = db_manager.clone();
-                    thread::spawn(move || {
-                        Self::handle_client(stream, temp, client_cnt)
-                            .unwrap_or_else(|error| eprintln!("{error:?}"));
+                    let handle = tokio::spawn(async move {
+                        Self::handle_client(stream, temp, client_cnt).await
                     });
                 }
                 Err(e) => {
