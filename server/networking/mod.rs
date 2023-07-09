@@ -63,13 +63,18 @@ impl ServerNetworking {
                 let handle = tokio::spawn(async move {
                     tman.save_message(&msg).await
                 });
-                let (res, ) = tokio::join!(handle);
-                let res = res.unwrap().unwrap();
-                //querries_vec.push(std::boxed::Box::new(handle));
+                querries_vec.push(std::boxed::Box::new(handle));
             }
             else if buf[0] == 3{
                 
 
+            }
+            for (id, handle) in querries_vec.iter_mut().enumerate() {
+                if handle.is_finished() {
+                    let (res,) = tokio::join!(handle);//use res to return a value
+                    querries_vec.remove(id);
+                    break;//we break so we have no borrow conflicts. returning 1 result per loop is sufficient anyway
+                }
             }
         }
     }
