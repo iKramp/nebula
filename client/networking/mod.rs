@@ -114,7 +114,7 @@ impl ClientNetworking {
     }
 
 
-    pub async fn send_message(//TODO: bocchi rethink how this is implemented. it currently blocks the thread until a message is sent from the client.
+    pub async fn send_message(//TODO: @bocchi rethink how this is implemented. it currently blocks the thread until a message is sent from the client.
                               // Before my change it just blocked the thread forever. Cause is awaiting to_event_reciever.recv, which blocks until there is a new message. It returns None only after the sender is dropped or something
         &mut self,
         event_sender: &mut iced::futures::channel::mpsc::Sender<FromNetworkingEvent>,
