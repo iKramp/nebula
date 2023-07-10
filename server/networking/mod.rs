@@ -71,10 +71,37 @@ impl ServerNetworking {
             }
             else if request_type_id == 3{
                 println!("client wants recent messages");
+                let str: String = str::from_utf8(data).unwrap().to_string();
+                let tman = _db_manager.clone();
+                let handle = tokio::spawn(async move {
+                    tman.get_new_messages(1, 0).await//actually read these numbers lol
+                });
+                querries_vec.push( Request { task_type_id: 3, task: Box::new(handle)} )
             }
             for (id, request) in querries_vec.iter_mut().enumerate() {
                 if request.task.is_finished() {
                     let (res,) = tokio::join!(&mut request.task);//use res to return a value
+                    if request.task_type_id == 3 { //return messages
+                        let returned_data = res??;
+                        if let QerryReturnType::Messages(vec) = returned_data {
+                            let mut buf = Vec::new();
+                            buf.push(3 as u8);
+                            for message in vec {
+                                let mut temp_buf: Vec<u8> = Vec::new();
+                                temp_buf.append(&mut message.id.to_be_bytes().to_vec());
+                                temp_buf.append(&mut message.channel_id.to_be_bytes().to_vec());
+                                temp_buf.append(&mut message.text.as_bytes().to_vec());
+
+                                buf.append(&mut temp_buf.len().to_be_bytes().to_vec());
+                                buf.append(&mut temp_buf);
+                            }
+
+                            //stream.write_all(&buf).unwrap();
+                        } else {
+                            println!("error");
+                        }
+
+                    }
                     querries_vec.remove(id);
                     break;//we break so we have no borrow conflicts. returning 1 result per loop is sufficient anyway
                 }
