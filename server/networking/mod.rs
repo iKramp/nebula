@@ -16,7 +16,7 @@ pub struct ServerNetworking {
 }
 
 struct Request {
-    task_id: u8,
+    task_type_id: u8,
     task: Box<tokio::task::JoinHandle<Result<QerryReturnType>>>
 }
 
@@ -41,7 +41,7 @@ impl ServerNetworking {
                 return Ok(());
             }
             println!("Received message");
-            let id = buf[0];
+            let request_type_id = buf[0];
             let data = &buf[1..bytes_read];
             //stream.write_all(buf.get(..bytes_read).ok_or(anyhow::anyhow!("err"))?)?;
             //println!("Echoed");
@@ -50,11 +50,11 @@ impl ServerNetworking {
             // 1 - client requests its id
             // 2 - client sends a message 
             // 3 - client wants new messages ig
-            if id == 1 {
+            if request_type_id == 1 {
                 println!("returning id");
                 stream.write_all(&client_id.to_be_bytes());
             }
-            else if id == 2{
+            else if request_type_id == 2{
                 println!("saving message");
                 let msg = crate::database::data_types::Message { 
                     id: 1,
@@ -67,9 +67,9 @@ impl ServerNetworking {
                 let handle = tokio::spawn(async move {
                     tman.save_message(&msg).await
                 });
-                querries_vec.push( Request { task_id: 2, task: Box::new(handle) });
+                querries_vec.push( Request { task_type_id: 2, task: Box::new(handle) });
             }
-            else if id == 3{
+            else if request_type_id == 3{
                 
 
             }
