@@ -70,12 +70,12 @@ impl ServerNetworking {
                 querries_vec.push( Request { task_type_id: 2, task: Box::new(handle) });
             }
             else if request_type_id == 3{
-                
-
+                println!("client wants recent messages");
             }
             for (id, request) in querries_vec.iter_mut().enumerate() {
                 if request.task.is_finished() {
                     let (res,) = tokio::join!(&mut request.task);//use res to return a value
+                    querries_vec.remove(id);
                     break;//we break so we have no borrow conflicts. returning 1 result per loop is sufficient anyway
                 }
             }

@@ -56,8 +56,8 @@ impl ClientNetworking {
         loop {
             self.send_message(&mut event_sender, &mut to_event_receiver)
                 .await;
-            //self.get_new_messages(&mut event_sender, tmp).await;
-            tokio::time::sleep(core::time::Duration::from_millis(10)).await;
+            self.get_new_messages(&mut event_sender, tmp, 0).await;//add a way to get last message id
+            tokio::time::sleep(core::time::Duration::from_millis(1000)).await;
         }
 
         //println!("Terminated.");
@@ -67,9 +67,22 @@ impl ClientNetworking {
         &mut self,
         event_sender: &mut iced::futures::channel::mpsc::Sender<FromNetworkingEvent>,
         channel_id: ChannelId,
+        last_message_id: u64,
     ) {
 
-        let msg = self.read_from_server();
+        let mut buf = Vec::new();
+        buf.push(3 as u8);//id of requesting new messages
+        buf.append(&mut channel_id.id.to_be_bytes().to_vec());
+        buf.append(&mut last_message_id.to_be_bytes().to_vec());
+
+        self.stream
+            .as_ref()
+            .unwrap()
+            .write_all(&buf)
+            .unwrap();
+        println!("Requesting new messages from server...");
+
+        /*let msg = self.read_from_server();idk what this is so i just commented it
 
 
         println!("Got it");
@@ -91,7 +104,7 @@ impl ClientNetworking {
                 MessageId::new(self.curr_message_id),
             ))
             .unwrap();
-        self.curr_message_id += 1;
+        self.curr_message_id += 1;*/
     }
 
     fn read_from_server(&mut self) -> Vec<u8>{
