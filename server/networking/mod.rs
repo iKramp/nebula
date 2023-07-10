@@ -38,6 +38,8 @@ impl ServerNetworking {
                 return Ok(());
             }
             println!("Received message");
+            let id = buf[0];
+            let data = buf[1..bytes_read];
             //stream.write_all(buf.get(..bytes_read).ok_or(anyhow::anyhow!("err"))?)?;
             //println!("Echoed");
         
@@ -45,18 +47,17 @@ impl ServerNetworking {
             // 1 - client requests its id
             // 2 - client sends a message 
             // 3 - client wants new messages ig
-            if buf[0] == 1 {
+            if id == 1 {
                 println!("returning id");
                 stream.write_all(&client_id.to_be_bytes());
             }
-            else if buf[0] == 2{
+            else if id == 2{
                 println!("saving message");
-                // needs async?
                 let msg = crate::database::data_types::Message { 
                     id: 1,
                     user_id: client_id, 
                     channel_id: 1, 
-                    text: str::from_utf8(&buf[1..bytes_read]).unwrap().to_string(), 
+                    text: str::from_utf8(&data).unwrap().to_string(),
                     date_created: 1 
                 };
                 let tman = _db_manager.clone();
@@ -65,7 +66,7 @@ impl ServerNetworking {
                 });
                 querries_vec.push(std::boxed::Box::new(handle));
             }
-            else if buf[0] == 3{
+            else if id == 3{
                 
 
             }
