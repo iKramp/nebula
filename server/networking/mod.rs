@@ -15,6 +15,11 @@ pub struct ServerNetworking {
     clients: Vec<TcpStream>,
 }
 
+struct Request {
+    task_id: u8,
+    task: Box<tokio::task::JoinHandle<Result<QerryReturnType>>>
+}
+
 impl ServerNetworking {
     pub const fn new() -> Self {
         Self {
@@ -24,9 +29,7 @@ impl ServerNetworking {
 
     pub async fn handle_client(mut stream: TcpStream, _db_manager: Arc<DbManager>, client_id : u64) -> Result<()> {
         println!("Incoming connection from: {}", stream.peer_addr()?);
-        let mut querries_vec: Vec<
-            alloc::boxed::Box<tokio::task::JoinHandle<Result<QerryReturnType>>>,
-        > = Vec::new(); //when a request is sent from the client, spawn a task, save it here and loop through this and return the data when a task finishes
+        let mut querries_vec: Vec<Request> = Vec::new(); //when a request is sent from the client, spawn a task, save it here and loop through this and return the data when a task finishes
         let mut buf = [0; 512];
         let mut _user: Option<User> = None; //I leave this here to remind you that as soon as the initial connection is made, packets containing the public keys should be sent.
                                             //This also implies user authentication and thus we can be sure which user is on this connection. For all future networking the
@@ -64,7 +67,7 @@ impl ServerNetworking {
                 let handle = tokio::spawn(async move {
                     tman.save_message(&msg).await
                 });
-                querries_vec.push(std::boxed::Box::new(handle));
+                querries_vec.push( Request { task_id: 2, task: Box::new(handle) });
             }
             else if id == 3{
                 
