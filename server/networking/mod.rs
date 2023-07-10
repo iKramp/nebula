@@ -42,7 +42,7 @@ impl ServerNetworking {
             }
             println!("Received message");
             let id = buf[0];
-            let data = buf[1..bytes_read];
+            let data = &buf[1..bytes_read];
             //stream.write_all(buf.get(..bytes_read).ok_or(anyhow::anyhow!("err"))?)?;
             //println!("Echoed");
         
@@ -60,7 +60,7 @@ impl ServerNetworking {
                     id: 1,
                     user_id: client_id, 
                     channel_id: 1, 
-                    text: str::from_utf8(&data).unwrap().to_string(),
+                    text: str::from_utf8(data).unwrap().to_string(),
                     date_created: 1 
                 };
                 let tman = _db_manager.clone();
@@ -73,10 +73,9 @@ impl ServerNetworking {
                 
 
             }
-            for (id, handle) in querries_vec.iter_mut().enumerate() {
-                if handle.is_finished() {
-                    let (res,) = tokio::join!(handle);//use res to return a value
-                    querries_vec.remove(id);
+            for (id, request) in querries_vec.iter_mut().enumerate() {
+                if request.task.is_finished() {
+                    let (res,) = tokio::join!(&mut request.task);//use res to return a value
                     break;//we break so we have no borrow conflicts. returning 1 result per loop is sufficient anyway
                 }
             }
