@@ -1248,7 +1248,7 @@ dependencies = [
 [[package]]
 name = "kvptree"
 version = "0.1.0"
-source = "git+https://github.com/iKramp/KVPTree.git#3bbb02139464ce4076c3f5a45f9e8ebdb4299df0"
+source = "git+https://github.com/iKramp/KVPTree.git#d5ac096101ac95c9e1da5932ad7e85786ce6a179"
 dependencies = [
  "anyhow",
 ]
