@@ -7,8 +7,8 @@ use anyhow::Result;
 use std::collections::HashMap;
 use std::io::{Error, Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
-use std::thread;
 use std::str;
+use std::thread;
 
 pub struct ServerNetworking {
     // channels: HashMap<u64, Vec<TcpStream>>,
@@ -17,7 +17,7 @@ pub struct ServerNetworking {
 
 struct Request {
     task_type_id: u8,
-    task: Box<tokio::task::JoinHandle<Result<QerryReturnType>>>
+    task: Box<tokio::task::JoinHandle<Result<QerryReturnType>>>,
 }
 
 impl ServerNetworking {
@@ -27,7 +27,11 @@ impl ServerNetworking {
         }
     }
 
-    pub async fn handle_client(mut stream: TcpStream, _db_manager: Arc<DbManager>, client_id : u64) -> Result<()> {
+    pub async fn handle_client(
+        mut stream: TcpStream,
+        _db_manager: Arc<DbManager>,
+        client_id: u64,
+    ) -> Result<()> {
         println!("Incoming connection from: {}", stream.peer_addr()?);
         let mut querries_vec: Vec<Request> = Vec::new(); //when a request is sent from the client, spawn a task, save it here and loop through this and return the data when a task finishes
         let mut buf = [0; 512];
@@ -45,43 +49,46 @@ impl ServerNetworking {
             let data = &buf[1..bytes_read];
             //stream.write_all(buf.get(..bytes_read).ok_or(anyhow::anyhow!("err"))?)?;
             //println!("Echoed");
-        
+
             //decide what to do depending on the client request
             // 1 - client requests its id
-            // 2 - client sends a message 
+            // 2 - client sends a message
             // 3 - client wants new messages ig
             if request_type_id == 1 {
                 println!("returning id");
                 stream.write_all(&client_id.to_be_bytes());
-            }
-            else if request_type_id == 2{
+            } else if request_type_id == 2 {
                 println!("saving message");
-                let msg = crate::database::data_types::Message { 
+                let msg = crate::database::data_types::Message {
                     id: 1,
-                    user_id: client_id, 
-                    channel_id: 1, 
+                    user_id: client_id,
+                    channel_id: 1,
                     text: str::from_utf8(data).unwrap().to_string(),
-                    date_created: 1 
+                    date_created: 1,
                 };
                 let tman = _db_manager.clone();
-                let handle = tokio::spawn(async move {
-                    tman.save_message(&msg).await
+                let handle = tokio::spawn(async move { tman.save_message(&msg).await });
+                querries_vec.push(Request {
+                    task_type_id: 2,
+                    task: Box::new(handle),
                 });
-                querries_vec.push( Request { task_type_id: 2, task: Box::new(handle) });
-            }
-            else if request_type_id == 3{
+            } else if request_type_id == 3 {
                 println!("client wants recent messages");
                 let str: String = str::from_utf8(data).unwrap().to_string();
                 let tman = _db_manager.clone();
                 let handle = tokio::spawn(async move {
-                    tman.get_new_messages(1, 0).await//actually read these numbers lol
+                    tman.get_new_messages(1, 0).await //actually read these numbers lol
                 });
-                querries_vec.push( Request { task_type_id: 3, task: Box::new(handle)} )
+                querries_vec.push(Request {
+                    task_type_id: 3,
+                    task: Box::new(handle),
+                })
             }
             for (id, request) in querries_vec.iter_mut().enumerate() {
                 if request.task.is_finished() {
-                    let (res,) = tokio::join!(&mut request.task);//use res to return a value
-                    if request.task_type_id == 3 { //return messages
+                    let (res,) = tokio::join!(&mut request.task); //use res to return a value
+                    if request.task_type_id == 3 {
+                        //return messages
                         let returned_data = res??;
                         if let QerryReturnType::Messages(vec) = returned_data {
                             let mut buf = Vec::new();
@@ -100,15 +107,14 @@ impl ServerNetworking {
                         } else {
                             println!("error");
                         }
-
                     }
                     querries_vec.remove(id);
-                    break;//we break so we have no borrow conflicts. returning 1 result per loop is sufficient anyway
+                    break; //we break so we have no borrow conflicts. returning 1 result per loop is sufficient anyway
                 }
             }
         }
     }
-    
+
     pub async fn listen_for_client(&mut self, db_manager: DbManager) {
         let db_manager = Arc::new(db_manager);
         //listen on port 8080
@@ -124,9 +130,10 @@ impl ServerNetworking {
                     println!("New connection: {} ", stream.peer_addr().unwrap());
                     //self.clients.push(stream.try_clone().unwrap());
                     let temp = db_manager.clone();
-                    let handle = tokio::spawn(async move {
-                        Self::handle_client(stream, temp, client_cnt).await
-                    });
+                    let handle =
+                        tokio::spawn(
+                            async move { Self::handle_client(stream, temp, client_cnt).await },
+                        );
                 }
                 Err(e) => {
                     println!("Error: {e}");
