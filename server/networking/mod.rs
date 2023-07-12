@@ -36,8 +36,8 @@ impl ServerNetworking {
         let mut querries_vec: Vec<Request> = Vec::new(); //when a request is sent from the client, spawn a task, save it here and loop through this and return the data when a task finishes
         let mut buf = [0; 512];
         let mut _user: Option<User> = None; //I leave this here to remind you that as soon as the initial connection is made, packets containing the public keys should be sent.
-                                            //This also implies user authentication and thus we can be sure which user is on this connection. For all future networking the
-                                            //connection will bi encrypted so having the user (and his public key) in memory is beneficial
+        //This also implies user authentication and thus we can be sure which user is on this connection. For all future networking the
+        //connection will bi encrypted so having the user (and his public key) in memory is beneficial
 
         loop {
             let bytes_read = stream.read(&mut buf)?;
@@ -45,8 +45,9 @@ impl ServerNetworking {
                 return Ok(());
             }
             println!("Received message");
-            let request_type_id = buf[0];
-            let data = &buf[1..bytes_read];
+            let data = kvptree::from_packet(buf.get(..bytes_read).unwrap().to_vec())?;
+            let request_type_id = data.get_str("request_type_id")?.parse::<u64>()?;
+
             //stream.write_all(buf.get(..bytes_read).ok_or(anyhow::anyhow!("err"))?)?;
             //println!("Echoed");
 
@@ -57,32 +58,35 @@ impl ServerNetworking {
             if request_type_id == 1 {
                 println!("returning id");
                 stream.write_all(&client_id.to_be_bytes());
-            } else if request_type_id == 2 {
+            } else if request_type_id == 2 {//TODO: refactor this mess and separate it more
+                let data = data.get_node("request")?;
                 println!("saving message");
                 let msg = crate::database::data_types::Message {
                     id: 1,
                     user_id: client_id,
                     channel_id: 1,
-                    text: str::from_utf8(data).unwrap().to_string(),
+                    text: data.get_str("message")?,
                     date_created: 1,
                 };
                 let tman = _db_manager.clone();
                 let handle = tokio::spawn(async move { tman.save_message(&msg).await });
-                querries_vec.push(Request {
+                handle.await;//TODO: check this, for some reason this BS doesn't want to execute by itself unless i await it
+                /*querries_vec.push(Request {
                     task_type_id: 2,
                     task: Box::new(handle),
-                });
+                });*/
             } else if request_type_id == 3 {
+                let data = data.get_node("request")?;
                 println!("client wants recent messages");
-                let str: String = str::from_utf8(data).unwrap().to_string();
                 let tman = _db_manager.clone();
                 let handle = tokio::spawn(async move {
-                    tman.get_new_messages(1, 0).await //actually read these numbers lol
+                    tman.get_new_messages(data.get_str("request.channel_id")?.parse::<u64>()?, data.get_str("request.last_message_id")?.parse::<u64>()?).await //actually read these numbers lol
                 });
-                querries_vec.push(Request {
+                handle.await;//TODO: check this, for some reason this BS doesn't want to execute by itself unless i await it
+                /*querries_vec.push(Request {
                     task_type_id: 3,
                     task: Box::new(handle),
-                })
+                })*/
             }
             for (id, request) in querries_vec.iter_mut().enumerate() {
                 if request.task.is_finished() {

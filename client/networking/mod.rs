@@ -1,5 +1,7 @@
 use std::io::{Read, Write};
 use std::net::TcpStream;
+use kvptree;
+use std::collections::HashMap;
 
 use super::user_interface::{FromNetworkingEvent, ToNetworkingEvent};
 use crate::networking;
@@ -26,8 +28,8 @@ impl ClientNetworking {
 
     fn request_id(&mut self) -> u8 {
         println!("requesting id...");
-        let msg = [1; 1];
-        self.stream.as_ref().unwrap().write_all(&msg);
+        let data = kvptree::ValueType::LIST(HashMap::from([("request_type_id".to_owned(), kvptree::ValueType::STRING("1".to_owned()))]));
+        self.stream.as_ref().unwrap().write_all(&kvptree::to_packet(data));
         let m = self.read_from_server();
         m[0]
     }
@@ -66,10 +68,16 @@ impl ClientNetworking {
         channel_id: ChannelId,
         last_message_id: u64,
     ) {
-        let mut buf = Vec::new();
-        buf.push(3 as u8); //id of requesting new messages
-        buf.append(&mut channel_id.id.to_be_bytes().to_vec());
-        buf.append(&mut last_message_id.to_be_bytes().to_vec());
+
+        //send to server
+        let data = kvptree::ValueType::LIST(HashMap::from([//i need to implement an easier way to do this...
+            ("request_type_id".to_owned(), kvptree::ValueType::STRING("3".to_owned())),
+            ("request".to_owned(), kvptree::ValueType::LIST(HashMap::from([
+                ("channel_id".to_owned(), kvptree::ValueType::STRING(channel_id.id.to_string())),
+                ("last_message".to_owned(), kvptree::ValueType::STRING(last_message_id.to_string()))
+            ])))
+        ]));
+        let buf = kvptree::to_packet(data);
 
         self.stream.as_ref().unwrap().write_all(&buf).unwrap();
         println!("Requesting new messages from server...");
@@ -135,9 +143,13 @@ impl ClientNetworking {
                     self.curr_message_id += 1;
 
                     //send to server
-                    let mut buf = Vec::new();
-                    buf.push(2 as u8); //id of sending a message
-                    buf.append(&mut msg.as_bytes().to_vec());
+                    let data = kvptree::ValueType::LIST(HashMap::from([//i need to implement an easier way to do this...
+                        ("request_type_id".to_owned(), kvptree::ValueType::STRING("2".to_owned())),
+                        ("request".to_owned(), kvptree::ValueType::LIST(HashMap::from([
+                            ("message".to_owned(), kvptree::ValueType::STRING(msg))
+                        ])))
+                    ]));
+                    let buf = kvptree::to_packet(data);
                     self.stream.as_ref().unwrap().write_all(&buf).unwrap();
                     println!("Sending message to server...");
                 }
