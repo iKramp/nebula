@@ -57,7 +57,13 @@ impl ServerNetworking {
             // 3 - client wants new messages ig
             if request_type_id == 1 {
                 println!("returning id");
-                stream.write_all(&client_id.to_be_bytes());
+                let data = kvptree::ValueType::LIST(HashMap::from([
+                    ("answer_type_id".to_owned(), kvptree::ValueType::STRING("1".to_owned())),
+                    ("answer".to_owned(), kvptree::ValueType::LIST(HashMap::from([
+                        ("client_id".to_owned(), kvptree::ValueType::STRING(client_id.to_string()))
+                    ])))
+                ]));
+                stream.write_all(&kvptree::to_packet(data));
             } else if request_type_id == 2 {//TODO: refactor this mess and separate it more
                 let data = data.get_node("request")?;
                 println!("saving message");

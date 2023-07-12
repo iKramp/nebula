@@ -14,7 +14,7 @@ use tokio::sync::mpsc::{unbounded_channel, Sender, UnboundedReceiver};
 pub struct ClientNetworking {
     stream: Option<TcpStream>,
     curr_message_id: u64,
-    id: u8,
+    id: u64,
 }
 
 impl ClientNetworking {
@@ -26,12 +26,15 @@ impl ClientNetworking {
         }
     }
 
-    fn request_id(&mut self) -> u8 {
+    fn request_id(&mut self) -> u64 {
         println!("requesting id...");
         let data = kvptree::ValueType::LIST(HashMap::from([("request_type_id".to_owned(), kvptree::ValueType::STRING("1".to_owned()))]));
         self.stream.as_ref().unwrap().write_all(&kvptree::to_packet(data));
         let m = self.read_from_server();
-        m[0]
+        let data = kvptree::from_packet(m).unwrap();
+        let id = data.get_str("answer.client_id").unwrap().parse::<u64>().unwrap();
+        id
+        /*m[0]*/
     }
 
     pub async fn manage_connection(
