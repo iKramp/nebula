@@ -1,0 +1,11 @@
+[package]
+name = "credientials_authenticator"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rsa = "0.9"
+rand = "0.8"
+
+[profile.dev.package.num-bigint-dig]
+opt-level = 3
