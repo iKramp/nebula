@@ -49,6 +49,7 @@ impl FromDbRows for Message {
 }
 
 pub struct Channel {
+    #[allow(unused)]
     id: u64,
     pub name: String,
 }
@@ -76,7 +77,9 @@ impl FromDbRows for Channel {
     }
 }
 
+
 pub struct User {
+    #[allow(unused)]
     id: u64,
     pub username: String,
     pub pub_key: u64,

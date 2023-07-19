@@ -7,12 +7,12 @@ use anyhow::Result;
 use std::collections::HashMap;
 use std::io::{Error, Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
-use std::str;
+use alloc::str;
 use std::thread;
 
 pub struct ServerNetworking {
     // channels: HashMap<u64, Vec<TcpStream>>,
-    clients: Vec<TcpStream>,
+    _clients: Vec<TcpStream>,
 }
 
 struct Request {
@@ -23,19 +23,19 @@ struct Request {
 impl ServerNetworking {
     pub const fn new() -> Self {
         Self {
-            clients: Vec::new(),
+            _clients: Vec::new(),
         }
     }
 
     pub async fn handle_client(
         mut stream: TcpStream,
-        _db_manager: Arc<DbManager>,
+        db_manager: Arc<DbManager>,
         client_id: u64,
     ) -> Result<()> {
         println!("Incoming connection from: {}", stream.peer_addr()?);
         let mut querries_vec: Vec<Request> = Vec::new(); //when a request is sent from the client, spawn a task, save it here and loop through this and return the data when a task finishes
         let mut buf = [0; 512];
-        let mut _user: Option<User> = None; //I leave this here to remind you that as soon as the initial connection is made, packets containing the public keys should be sent.
+        //let mut _user: Option<User> = None; //I leave this here to remind you that as soon as the initial connection is made, packets containing the public keys should be sent.
         //This also implies user authentication and thus we can be sure which user is on this connection. For all future networking the
         //connection will bi encrypted so having the user (and his public key) in memory is beneficial
 
@@ -63,7 +63,7 @@ impl ServerNetworking {
                         ("client_id".to_owned(), kvptree::ValueType::STRING(client_id.to_string()))
                     ])))
                 ]));
-                stream.write_all(&kvptree::to_packet(data));
+                stream.write_all(&kvptree::to_packet(data))?;
             } else if request_type_id == 2 {//TODO: refactor this mess and separate it more
                 let data = data.get_node("request")?;
                 println!("saving message");
@@ -74,25 +74,23 @@ impl ServerNetworking {
                     text: data.get_str("message")?,
                     date_created: 1,
                 };
-                let tman = _db_manager.clone();
+                let tman = db_manager.clone();
                 let handle = tokio::spawn(async move { tman.save_message(&msg).await });
-                handle.await;//TODO: check this, for some reason this BS doesn't want to execute by itself unless i await it
-                /*querries_vec.push(Request {
+                querries_vec.push(Request {
                     task_type_id: 2,
                     task: Box::new(handle),
-                });*/
+                });
             } else if request_type_id == 3 {
                 let data = data.get_node("request")?;
                 println!("client wants recent messages");
-                let tman = _db_manager.clone();
+                let tman = db_manager.clone();
                 let handle = tokio::spawn(async move {
                     tman.get_new_messages(data.get_str("request.channel_id")?.parse::<u64>()?, data.get_str("request.last_message_id")?.parse::<u64>()?).await //actually read these numbers lol
                 });
-                handle.await;//TODO: check this, for some reason this BS doesn't want to execute by itself unless i await it
-                /*querries_vec.push(Request {
+                querries_vec.push(Request {
                     task_type_id: 3,
                     task: Box::new(handle),
-                })*/
+                });
             }
             for (id, request) in querries_vec.iter_mut().enumerate() {
                 if request.task.is_finished() {
@@ -102,7 +100,7 @@ impl ServerNetworking {
                         let returned_data = res??;
                         if let QerryReturnType::Messages(vec) = returned_data {
                             let mut buf = Vec::new();
-                            buf.push(3 as u8);
+                            buf.push(3);
                             for message in vec {
                                 let mut temp_buf: Vec<u8> = Vec::new();
                                 temp_buf.append(&mut message.id.to_be_bytes().to_vec());
@@ -113,7 +111,7 @@ impl ServerNetworking {
                                 buf.append(&mut temp_buf);
                             }
 
-                            //stream.write_all(&buf).unwrap();
+                            stream.write_all(&buf).unwrap();
                         } else {
                             println!("error");
                         }
@@ -144,6 +142,10 @@ impl ServerNetworking {
                         tokio::spawn(
                             async move { Self::handle_client(stream, temp, client_cnt).await },
                         );
+                    let res = handle.await;
+                    if let Err(e) = res {
+                        println!("{e}");
+                    }
                 }
                 Err(e) => {
                     println!("Error: {e}");
