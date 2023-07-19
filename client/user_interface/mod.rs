@@ -111,6 +111,7 @@ pub enum FromNetworkingEvent {
     MessageReceived(ChannelId, MessageId),
     /// Called when a message has been loaded. Message is loaded from the back (oldest message).
     /// This is just a more efficient way of calling Channel, since it doesn't have to load all the messages.
+    #[allow(dead_code)]
     MessageLoaded(ChannelId, MessageId),
 }
 

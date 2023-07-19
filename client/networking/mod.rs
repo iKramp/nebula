@@ -1,15 +1,13 @@
+use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::net::TcpStream;
-use kvptree;
-use std::collections::HashMap;
 
 use super::user_interface::{FromNetworkingEvent, ToNetworkingEvent};
-use crate::networking;
 use crate::user_interface::FromNetworkingEvent::SenderInitialized;
 use crate::user_interface::{ChannelId, Message, MessageId};
 use iced::Result;
 use tokio::sync::mpsc;
-use tokio::sync::mpsc::{unbounded_channel, Sender, UnboundedReceiver};
+use tokio::sync::mpsc::UnboundedReceiver;
 
 pub struct ClientNetworking {
     stream: Option<TcpStream>,
@@ -28,12 +26,21 @@ impl ClientNetworking {
 
     fn request_id(&mut self) -> u64 {
         println!("requesting id...");
-        let data = kvptree::ValueType::LIST(HashMap::from([("request_type_id".to_owned(), kvptree::ValueType::STRING("1".to_owned()))]));
-        self.stream.as_ref().unwrap().write_all(&kvptree::to_packet(data));
+        let data = kvptree::ValueType::LIST(HashMap::from([(
+            "request_type_id".to_owned(),
+            kvptree::ValueType::STRING("1".to_owned()),
+        )]));
+        self.stream
+            .as_ref()
+            .unwrap()
+            .write_all(&kvptree::to_packet(data))
+            .unwrap();
         let m = self.read_from_server();
         let data = kvptree::from_packet(m).unwrap();
-        let id = data.get_str("answer.client_id").unwrap().parse::<u64>().unwrap();
-        id
+        data.get_str("answer.client_id")
+            .unwrap()
+            .parse::<u64>()
+            .unwrap()
         /*m[0]*/
     }
 
@@ -58,27 +65,40 @@ impl ClientNetworking {
         loop {
             self.send_message(&mut event_sender, &mut to_event_receiver)
                 .await;
-            self.get_new_messages(&mut event_sender, tmp, 0).await; //add a way to get last message id
+            self.get_new_messages(/*&mut event_sender, */ tmp, 0).await; //add a way to get last message id
             tokio::time::sleep(core::time::Duration::from_millis(1000)).await;
         }
 
         //println!("Terminated.");
     }
 
+    #[allow(clippy::unused_async)]
     pub async fn get_new_messages(
         &mut self,
-        event_sender: &mut iced::futures::channel::mpsc::Sender<FromNetworkingEvent>,
+        //event_sender: &mut iced::futures::channel::mpsc::Sender<FromNetworkingEvent>,
         channel_id: ChannelId,
         last_message_id: u64,
     ) {
-
         //send to server
-        let data = kvptree::ValueType::LIST(HashMap::from([//i need to implement an easier way to do this...
-            ("request_type_id".to_owned(), kvptree::ValueType::STRING("3".to_owned())),
-            ("request".to_owned(), kvptree::ValueType::LIST(HashMap::from([
-                ("channel_id".to_owned(), kvptree::ValueType::STRING(channel_id.id.to_string())),
-                ("last_message".to_owned(), kvptree::ValueType::STRING(last_message_id.to_string()))
-            ])))
+        let data = kvptree::ValueType::LIST(HashMap::from([
+            //i need to implement an easier way to do this...
+            (
+                "request_type_id".to_owned(),
+                kvptree::ValueType::STRING("3".to_owned()),
+            ),
+            (
+                "request".to_owned(),
+                kvptree::ValueType::LIST(HashMap::from([
+                    (
+                        "channel_id".to_owned(),
+                        kvptree::ValueType::STRING(channel_id.id.to_string()),
+                    ),
+                    (
+                        "last_message".to_owned(),
+                        kvptree::ValueType::STRING(last_message_id.to_string()),
+                    ),
+                ])),
+            ),
         ]));
         let buf = kvptree::to_packet(data);
 
@@ -113,7 +133,7 @@ impl ClientNetworking {
     fn read_from_server(&mut self) -> Vec<u8> {
         let mut buf = [0; 2048];
         let bytes_read = self.stream.as_ref().unwrap().read(&mut buf).unwrap();
-        buf[..bytes_read].to_vec()
+        buf.get(..bytes_read).unwrap().to_vec()
     }
 
     pub async fn send_message(
@@ -146,11 +166,19 @@ impl ClientNetworking {
                     self.curr_message_id += 1;
 
                     //send to server
-                    let data = kvptree::ValueType::LIST(HashMap::from([//i need to implement an easier way to do this...
-                        ("request_type_id".to_owned(), kvptree::ValueType::STRING("2".to_owned())),
-                        ("request".to_owned(), kvptree::ValueType::LIST(HashMap::from([
-                            ("message".to_owned(), kvptree::ValueType::STRING(msg))
-                        ])))
+                    let data = kvptree::ValueType::LIST(HashMap::from([
+                        //i need to implement an easier way to do this...
+                        (
+                            "request_type_id".to_owned(),
+                            kvptree::ValueType::STRING("2".to_owned()),
+                        ),
+                        (
+                            "request".to_owned(),
+                            kvptree::ValueType::LIST(HashMap::from([(
+                                "message".to_owned(),
+                                kvptree::ValueType::STRING(msg),
+                            )])),
+                        ),
                     ]));
                     let buf = kvptree::to_packet(data);
                     self.stream.as_ref().unwrap().write_all(&buf).unwrap();
