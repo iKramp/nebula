@@ -3,6 +3,7 @@ use super::database_commands;
 use crate::database::data_types::FromDbRows;
 use anyhow::{Ok, Result};
 
+#[allow(unused)]
 pub enum QerryReturnType {
     None,
     U64(u64),
