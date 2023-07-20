@@ -33,10 +33,10 @@ impl ClientNetworking {
         self.stream
             .as_ref()
             .unwrap()
-            .write_all(&kvptree::to_packet(data))
+            .write_all(&kvptree::to_string(data))
             .unwrap();
         let m = self.read_from_server();
-        let data = kvptree::from_packet(m).unwrap();
+        let data = kvptree::from_string(m).unwrap();
         data.get_str("answer.client_id")
             .unwrap()
             .parse::<u64>()
@@ -100,7 +100,7 @@ impl ClientNetworking {
                 ])),
             ),
         ]));
-        let buf = kvptree::to_packet(data);
+        let buf = kvptree::to_string(data);
 
         self.stream.as_ref().unwrap().write_all(&buf).unwrap();
         println!("Requesting new messages from server...");
@@ -180,7 +180,7 @@ impl ClientNetworking {
                             )])),
                         ),
                     ]));
-                    let buf = kvptree::to_packet(data);
+                    let buf = kvptree::to_string(data);
                     self.stream.as_ref().unwrap().write_all(&buf).unwrap();
                     println!("Sending message to server...");
                 }

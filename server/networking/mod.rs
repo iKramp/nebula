@@ -45,7 +45,7 @@ impl ServerNetworking {
                 return Ok(());
             }
             println!("Received message");
-            let data = kvptree::from_packet(buf.get(..bytes_read).unwrap().to_vec())?;
+            let data = kvptree::from_string(buf.get(..bytes_read).unwrap().to_vec())?;
             let request_type_id = data.get_str("request_type_id")?.parse::<u64>()?;
 
             //stream.write_all(buf.get(..bytes_read).ok_or(anyhow::anyhow!("err"))?)?;
@@ -63,7 +63,7 @@ impl ServerNetworking {
                         ("client_id".to_owned(), kvptree::ValueType::STRING(client_id.to_string()))
                     ])))
                 ]));
-                stream.write_all(&kvptree::to_packet(data))?;
+                stream.write_all(&kvptree::to_string(data))?;
             } else if request_type_id == 2 {//TODO: refactor this mess and separate it more
                 let data = data.get_node("request")?;
                 println!("saving message");
