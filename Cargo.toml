@@ -1,21 +1,31 @@
-[package]
+#[package]
+#name = "nebula"
+#version = "0.1.0"
+#edition = "2018"
+#resolver = "2"
+#
+#[dependencies]
+#tokio = { version = "1.28", features = ["full"] }
+#iced = { version = "0.9", features = ["tokio"] }
+#tokio-postgres = "0.7"
+#anyhow = "1.0"
+#rand = "0.8"
+#kvptree = { git = "https://github.com/iKramp/KVPTree.git"}
+#
+#[[bin]]
+#name = "server"
+#path = "server/main.rs"
+#
+#[[bin]]
+#name = "client"
+#path = "client/main.rs"
+
+[workspace]
 name = "nebula"
 version = "0.1.0"
 edition = "2018"
 resolver = "2"
-
-[dependencies]
-tokio = { version = "1.28", features = ["full"] }
-iced = { version = "0.9", features = ["tokio"] }
-tokio-postgres = "0.7"
-anyhow = "1.0"
-rand = "0.8"
-kvptree = { git = "https://github.com/iKramp/KVPTree.git"}
-
-[[bin]]
-name = "server"
-path = "server/main.rs"
-
-[[bin]]
-name = "client"
-path = "client/main.rs"
+members = [
+    "server",
+    "client"
+]

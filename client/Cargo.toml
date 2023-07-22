@@ -1,0 +1,14 @@
+[package]
+name = "nebula_client"
+version = "0.1.0"
+edition = "2018"
+resolver = "2"
+
+[[bin]]
+name = "client"
+path = "src/main.rs"
+
+[dependencies]
+kvptree = { git = "https://github.com/iKramp/KVPTree.git"}
+iced = { version = "0.9", features = ["tokio"] }
+tokio = { version = "1.28", features = ["full"] }
