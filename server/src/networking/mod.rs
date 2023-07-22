@@ -2,12 +2,12 @@ use crate::database::database_commands::save_message;
 
 use super::database::database_actions::DbManager;
 use super::database::{data_types::User, database_actions::QerryReturnType};
+use alloc::str;
 use alloc::sync::Arc;
 use anyhow::Result;
 use std::collections::HashMap;
 use std::io::{Error, Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
-use alloc::str;
 use std::thread;
 
 pub struct ServerNetworking {
@@ -58,13 +58,21 @@ impl ServerNetworking {
             if request_type_id == 1 {
                 println!("returning id");
                 let data = kvptree::ValueType::LIST(HashMap::from([
-                    ("answer_type_id".to_owned(), kvptree::ValueType::STRING("1".to_owned())),
-                    ("answer".to_owned(), kvptree::ValueType::LIST(HashMap::from([
-                        ("client_id".to_owned(), kvptree::ValueType::STRING(client_id.to_string()))
-                    ])))
+                    (
+                        "answer_type_id".to_owned(),
+                        kvptree::ValueType::STRING("1".to_owned()),
+                    ),
+                    (
+                        "answer".to_owned(),
+                        kvptree::ValueType::LIST(HashMap::from([(
+                            "client_id".to_owned(),
+                            kvptree::ValueType::STRING(client_id.to_string()),
+                        )])),
+                    ),
                 ]));
                 stream.write_all(&kvptree::to_string(data))?;
-            } else if request_type_id == 2 {//TODO: refactor this mess and separate it more
+            } else if request_type_id == 2 {
+                //TODO: refactor this mess and separate it more
                 let data = data.get_node("request")?;
                 println!("saving message");
                 let msg = crate::database::data_types::Message {
@@ -85,7 +93,11 @@ impl ServerNetworking {
                 println!("client wants recent messages");
                 let tman = db_manager.clone();
                 let handle = tokio::spawn(async move {
-                    tman.get_new_messages(data.get_str("request.channel_id")?.parse::<u64>()?, data.get_str("request.last_message_id")?.parse::<u64>()?).await //actually read these numbers lol
+                    tman.get_new_messages(
+                        data.get_str("request.channel_id")?.parse::<u64>()?,
+                        data.get_str("request.last_message_id")?.parse::<u64>()?,
+                    )
+                    .await //actually read these numbers lol
                 });
                 querries_vec.push(Request {
                     task_type_id: 3,

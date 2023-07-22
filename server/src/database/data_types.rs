@@ -77,7 +77,6 @@ impl FromDbRows for Channel {
     }
 }
 
-
 pub struct User {
     #[allow(unused)]
     id: u64,
