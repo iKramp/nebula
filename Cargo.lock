@@ -1525,6 +1525,7 @@ version = "0.1.0"
 dependencies = [
  "iced",
  "kvptree",
+ "network-manager",
  "tokio",
 ]
 
@@ -1534,12 +1535,13 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "kvptree",
+ "network-manager",
  "tokio",
  "tokio-postgres",
 ]
 
 [[package]]
-name = "network_manager"
+name = "network-manager"
 version = "0.1.0"
 dependencies = [
  "anyhow",

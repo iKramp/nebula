@@ -1,5 +1,5 @@
 [package]
-name = "network_manager"
+name = "network-manager"
 version = "0.1.0"
 edition = "2018"
 

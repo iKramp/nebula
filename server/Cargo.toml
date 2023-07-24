@@ -13,3 +13,4 @@ tokio = { version = "1.28", features = ["full"] }
 tokio-postgres = "0.7"
 kvptree = { git = "https://github.com/iKramp/KVPTree.git"}
 anyhow = "1.0"
+network-manager = { path = "../shared/network_manager" }
