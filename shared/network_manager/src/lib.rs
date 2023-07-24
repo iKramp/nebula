@@ -45,14 +45,14 @@ impl NetworkManager {
         }
     }
     
-    fn get_message(&mut self) -> Option<Vec<u8>> {
+    pub fn get_message(&mut self) -> Option<Vec<u8>> {
         if let Ok(mut messages_mutex) = self.messages.lock() {
             return messages_mutex.pop();
         }
         None
     }
     
-    fn send_message(&mut self, message: Vec<u8>) {
+    pub fn send_message(&mut self, message: Vec<u8>) {
         let _res = self.stream.write_all(&message.len().to_be_bytes());
         let _res = self.stream.write_all(&message);
     }
