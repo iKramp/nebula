@@ -33,77 +33,84 @@ impl ServerNetworking {
         client_id: u64,
     ) -> Result<()> {
         println!("Incoming connection from: {}", stream.peer_addr()?);
+        let mut stream_manager = network_manager::NetworkManager::new(stream).await;
+        println!("stream manager ready");
         let mut querries_vec: Vec<Request> = Vec::new(); //when a request is sent from the client, spawn a task, save it here and loop through this and return the data when a task finishes
-        let mut buf = [0; 512];
         //let mut _user: Option<User> = None; //I leave this here to remind you that as soon as the initial connection is made, packets containing the public keys should be sent.
         //This also implies user authentication and thus we can be sure which user is on this connection. For all future networking the
         //connection will bi encrypted so having the user (and his public key) in memory is beneficial
 
         loop {
-            let bytes_read = stream.read(&mut buf)?;
-            if bytes_read == 0 {
+            std::thread::sleep(std::time::Duration::from_millis(10));//so we don't hog the resources or something idk
+            let data = stream_manager.get_message().unwrap_or(Vec::new());
+            if !stream_manager.connected {
+                println!("client disconnected");
+                //clear the querries vec
                 return Ok(());
             }
-            println!("Received message");
-            let data = kvptree::from_string(buf.get(..bytes_read).unwrap().to_vec())?;
-            let request_type_id = data.get_str("request_type_id")?.parse::<u64>()?;
+            if data.len() > 0 {
+                let data = kvptree::from_string(data)?;
+                println!("Received message from client");
+                let request_type_id = data.get_str("request_type_id")?.parse::<u64>()?;
 
-            //stream.write_all(buf.get(..bytes_read).ok_or(anyhow::anyhow!("err"))?)?;
-            //println!("Echoed");
+                //stream.write_all(buf.get(..bytes_read).ok_or(anyhow::anyhow!("err"))?)?;
+                //println!("Echoed");
 
-            //decide what to do depending on the client request
-            // 1 - client requests its id
-            // 2 - client sends a message
-            // 3 - client wants new messages ig
-            if request_type_id == 1 {
-                println!("returning id");
-                let data = kvptree::ValueType::LIST(HashMap::from([
-                    (
-                        "answer_type_id".to_owned(),
+                //decide what to do depending on the client request
+                // 1 - client requests its id
+                // 2 - client sends a message
+                // 3 - client wants new messages ig
+                if request_type_id == 1 {
+                    println!("returning id");
+                    let data = kvptree::ValueType::LIST(HashMap::from([
+                        (
+                            "answer_type_id".to_owned(),
                         kvptree::ValueType::STRING("1".to_owned()),
                     ),
-                    (
-                        "answer".to_owned(),
+                        (
+                            "answer".to_owned(),
                         kvptree::ValueType::LIST(HashMap::from([(
                             "client_id".to_owned(),
                             kvptree::ValueType::STRING(client_id.to_string()),
                         )])),
                     ),
-                ]));
-                stream.write_all(&kvptree::to_string(data))?;
-            } else if request_type_id == 2 {
-                //TODO: refactor this mess and separate it more
-                let data = data.get_node("request")?;
-                println!("saving message");
-                let msg = crate::database::data_types::Message {
-                    id: 1,
-                    user_id: client_id,
-                    channel_id: 1,
-                    text: data.get_str("message")?,
-                    date_created: 1,
-                };
-                let tman = db_manager.clone();
-                let handle = tokio::spawn(async move { tman.save_message(&msg).await });
-                querries_vec.push(Request {
-                    task_type_id: 2,
-                    task: Box::new(handle),
-                });
-            } else if request_type_id == 3 {
-                let data = data.get_node("request")?;
-                println!("client wants recent messages");
-                let tman = db_manager.clone();
-                let handle = tokio::spawn(async move {
-                    tman.get_new_messages(
-                        data.get_str("request.channel_id")?.parse::<u64>()?,
+                        ]));
+                    stream_manager.send_message(kvptree::to_string(data));
+                } else if request_type_id == 2 {
+                    //TODO: refactor this mess and separate it more
+                    let data = data.get_node("request")?;
+                    println!("saving message");
+                    let msg = crate::database::data_types::Message {
+                        id: 1,
+                        user_id: client_id,
+                        channel_id: 1,
+                        text: data.get_str("message")?,
+                        date_created: 1,
+                    };
+                    let tman = db_manager.clone();
+                    let handle = tokio::spawn(async move { tman.save_message(&msg).await });
+                    querries_vec.push(Request {
+                        task_type_id: 2,
+                        task: Box::new(handle),
+                    });
+                } else if request_type_id == 3 {
+                    let data = data.get_node("request")?;
+                    println!("client wants recent messages");
+                    let tman = db_manager.clone();
+                    let handle = tokio::spawn(async move {
+                        tman.get_new_messages(
+                            data.get_str("request.channel_id")?.parse::<u64>()?,
                         data.get_str("request.last_message_id")?.parse::<u64>()?,
                     )
                     .await //actually read these numbers lol
-                });
-                querries_vec.push(Request {
-                    task_type_id: 3,
-                    task: Box::new(handle),
-                });
+                    });
+                    querries_vec.push(Request {
+                        task_type_id: 3,
+                        task: Box::new(handle),
+                    });
+                }
             }
+
             for (id, request) in querries_vec.iter_mut().enumerate() {
                 if request.task.is_finished() {
                     let (res,) = tokio::join!(&mut request.task); //use res to return a value
@@ -123,7 +130,7 @@ impl ServerNetworking {
                                 buf.append(&mut temp_buf);
                             }
 
-                            stream.write_all(&buf).unwrap();
+                            stream_manager.send_message(buf);
                         } else {
                             println!("error");
                         }

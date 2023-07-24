@@ -13,8 +13,10 @@ pub struct NetworkManager {
 impl NetworkManager {
     pub async fn new(stream: std::net::TcpStream) -> Self {
         let messages = Arc::new(Mutex::new(Vec::new()));
-        let abort_handle =
-            tokio::spawn(Self::read(stream.try_clone().unwrap(), messages.clone())).abort_handle();
+        let task = Self::read(stream.try_clone().unwrap(), messages.clone());
+        let abort_handle = tokio::spawn( async move { task.await} ).abort_handle();
+        /*let abort_handle =
+            tokio::spawn(Self::read(stream.try_clone().unwrap(), messages.clone())).abort_handle();*/
         let mut temp = Self {
             messages,
             abort_handle,
@@ -33,6 +35,7 @@ impl NetworkManager {
             let read = stream.read(&mut size)?;
             println!("received message");
             if read == 0 {
+                println!("err");
                 return Ok(());
             }
             let size = u32::from_be_bytes(size) as usize;

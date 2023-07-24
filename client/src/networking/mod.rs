@@ -10,15 +10,16 @@ use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedReceiver;
 
 pub struct ClientNetworking {
-    stream: Option<TcpStream>,
+    stream_manager: network_manager::NetworkManager,
     curr_message_id: u64,
     id: u64,
 }
 
 impl ClientNetworking {
-    pub const fn new() -> Self {
+    pub async fn new() -> Self {
+        let stream = TcpStream::connect("localhost:8080").expect("Couldnt connect to server!");
         Self {
-            stream: None,
+            stream_manager: network_manager::NetworkManager::new(stream).await,
             curr_message_id: 0,
             id: 0,
         }
@@ -30,13 +31,12 @@ impl ClientNetworking {
             "request_type_id".to_owned(),
             kvptree::ValueType::STRING("1".to_owned()),
         )]));
-        self.stream
-            .as_ref()
-            .unwrap()
-            .write_all(&kvptree::to_string(data))
-            .unwrap();
-        let m = self.read_from_server();
-        let data = kvptree::from_string(m).unwrap();
+        self.stream_manager.send_message(
+                kvptree::to_string(data)
+            );
+        let id_message = self.stream_manager.wait_for_message().unwrap();
+        println!("got message");
+        let data = kvptree::from_string(id_message).unwrap();
         data.get_str("answer.client_id")
             .unwrap()
             .parse::<u64>()
@@ -53,9 +53,6 @@ impl ClientNetworking {
         event_sender
             .try_send(SenderInitialized(to_event_sender))
             .unwrap();
-
-        self.stream =
-            Some(TcpStream::connect("localhost:8080").expect("Couldnt connect to server!"));
 
         println!("Established connection");
         let tmp: ChannelId = ChannelId { id: 1 };
@@ -102,7 +99,7 @@ impl ClientNetworking {
         ]));
         let buf = kvptree::to_string(data);
 
-        self.stream.as_ref().unwrap().write_all(&buf).unwrap();
+        self.stream_manager.send_message(buf);
         println!("Requesting new messages from server...");
 
         /*let msg = self.read_from_server();idk what this is so i just commented it
@@ -130,10 +127,8 @@ impl ClientNetworking {
         self.curr_message_id += 1;*/
     }
 
-    fn read_from_server(&mut self) -> Vec<u8> {
-        let mut buf = [0; 2048];
-        let bytes_read = self.stream.as_ref().unwrap().read(&mut buf).unwrap();
-        buf.get(..bytes_read).unwrap().to_vec()
+    fn read_from_server(&mut self) -> Option<Vec<u8>> {
+        self.stream_manager.get_message()
     }
 
     pub async fn send_message(
@@ -181,7 +176,7 @@ impl ClientNetworking {
                         ),
                     ]));
                     let buf = kvptree::to_string(data);
-                    self.stream.as_ref().unwrap().write_all(&buf).unwrap();
+                    self.stream_manager.send_message(buf);
                     println!("Sending message to server...");
                 }
             }

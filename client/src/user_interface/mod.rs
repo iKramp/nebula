@@ -204,8 +204,8 @@ impl Application for NebulaApp {
             std::any::TypeId::of::<NetworkingWorker>(),
             100,
             |sender| async move {
-                let mut net = ClientNetworking::new();
-                net.manage_connection(sender).await.unwrap(); // TODO: uncomment and fix
+                let mut net = ClientNetworking::new().await;
+                net.manage_connection(sender).await.unwrap();
                 panic!("Networking worker died");
             },
         )
