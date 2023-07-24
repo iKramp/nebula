@@ -1,0 +1,8 @@
+[package]
+name = "network_manager"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+tokio = { version = "1.28", features = ["full"] }
+anyhow = "1.0"

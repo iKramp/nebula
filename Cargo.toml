@@ -5,5 +5,7 @@ edition = "2018"
 resolver = "2"
 members = [
     "server",
-    "client"
+    "client",
+    "shared/network_manager",
+    "shared/credientials_authenticator"
 ]
