@@ -14,7 +14,9 @@ impl NetworkManager {
     pub async fn new(stream: std::net::TcpStream) -> Self {
         let messages = Arc::new(Mutex::new(Vec::new()));
         let task = Self::read(stream.try_clone().unwrap(), messages.clone());
-        let abort_handle = tokio::spawn( async move { task.await} ).abort_handle();
+        let handle = tokio::task::spawn_blocking(move || {task} );
+        let abort_handle = handle.abort_handle();
+        //handle.await;
         /*let abort_handle =
             tokio::spawn(Self::read(stream.try_clone().unwrap(), messages.clone())).abort_handle();*/
         let mut temp = Self {
@@ -30,12 +32,22 @@ impl NetworkManager {
         mut stream: std::net::TcpStream,
         messages: Arc<Mutex<Vec<Vec<u8>>>>,
     ) -> Result<()> {
+        println!("received message");
         loop {
             let mut size: [u8; 4] = [0; 4];
-            let read = stream.read(&mut size)?;
-            println!("received message");
+            let read = stream.read(&mut size);
+            if let Err(e) = read {
+                println!("err");
+                panic!("err");
+                return Ok(());
+            }
+            if false == true {
+                println!("nonsense");
+            }
+            let read = read.unwrap();
             if read == 0 {
                 println!("err");
+                panic!("err");
                 return Ok(());
             }
             let size = u32::from_be_bytes(size) as usize;
@@ -49,6 +61,7 @@ impl NetworkManager {
                 let curr_read = stream
                     .read(&mut buffer.get_mut(0..std::cmp::min(512, size - read)).unwrap())?;
                 if curr_read == 0 {
+                    panic!("err");
                     return Ok(());
                 }
                 read += curr_read;
