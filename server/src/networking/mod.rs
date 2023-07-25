@@ -85,7 +85,7 @@ impl ServerNetworking {
                         user_id: client_id,
                         channel_id: 1,
                         text: data.get_str("message")?,
-                        date_created: 1,
+                        date_created: std::time::SystemTime::now().duration_since(std::time::SystemTime::UNIX_EPOCH).unwrap().as_millis() as u64,
                     };
                     let tman = db_manager.clone();
                     let handle = tokio::spawn(async move { tman.save_message(&msg).await });
