@@ -1,3 +1,4 @@
+use std::fs::read;
 use anyhow::Result;
 use std::io::{Error, Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
@@ -5,7 +6,7 @@ use std::sync::{Arc, Mutex};
 
 pub struct NetworkManager {
     messages: Arc<Mutex<Vec<Vec<u8>>>>,
-    abort_handle: tokio::task::AbortHandle,
+    handle: std::thread::JoinHandle<()>,
     stream: TcpStream,
     pub connected: bool,
 }
@@ -13,45 +14,32 @@ pub struct NetworkManager {
 impl NetworkManager {
     pub async fn new(stream: std::net::TcpStream) -> Self {
         let messages = Arc::new(Mutex::new(Vec::new()));
-        let task = Self::read(stream.try_clone().unwrap(), messages.clone());
-        let handle = tokio::task::spawn_blocking(move || {task} );
-        let abort_handle = handle.abort_handle();
-        //handle.await;
-        /*let abort_handle =
-            tokio::spawn(Self::read(stream.try_clone().unwrap(), messages.clone())).abort_handle();*/
+        let cloned_messages = messages.clone();
+        let cloned_stream = stream.try_clone().unwrap();
+        let handle = std::thread::spawn(move || {
+            Self::read(cloned_stream, cloned_messages);
+        });
         let mut temp = Self {
             messages,
-            abort_handle,
+            //abort_handle,
+            handle,
             stream,
             connected: true,
         };
         temp
     }
 
-    async fn read(
-        mut stream: std::net::TcpStream,
+    fn read(
+        mut stream: TcpStream,
         messages: Arc<Mutex<Vec<Vec<u8>>>>,
     ) -> Result<()> {
-        println!("received message");
         loop {
             let mut size: [u8; 4] = [0; 4];
-            let read = stream.read(&mut size);
-            if let Err(e) = read {
-                println!("err");
-                panic!("err");
-                return Ok(());
-            }
-            if false == true {
-                println!("nonsense");
-            }
-            let read = read.unwrap();
+            let read = stream.read(&mut size)?;
             if read == 0 {
-                println!("err");
-                panic!("err");
                 return Ok(());
             }
             let size = u32::from_be_bytes(size) as usize;
-            println!("message_size {}", size);
 
 
             let mut read = 0;
@@ -61,7 +49,6 @@ impl NetworkManager {
                 let curr_read = stream
                     .read(&mut buffer.get_mut(0..std::cmp::min(512, size - read)).unwrap())?;
                 if curr_read == 0 {
-                    panic!("err");
                     return Ok(());
                 }
                 read += curr_read;
@@ -70,12 +57,11 @@ impl NetworkManager {
             if let Ok(mut messages_mutex) = messages.lock() {
                 messages_mutex.push(message);
             }
-            println!("new message ready");
         }
     }
     
     pub fn get_message(&mut self) -> Option<Vec<u8>> {
-        if self.abort_handle.is_finished() { //update the status. Can still be read if there are messages in the vec
+        if self.handle.is_finished() { //update the status. Can still be read if there are messages in the vec
             self.connected = false;
         }
         if let Ok(mut messages_mutex) = self.messages.lock() {
@@ -97,16 +83,15 @@ impl NetworkManager {
     }
 
     pub fn send_message(&mut self, message: Vec<u8>) {
-        if self.abort_handle.is_finished() { //prevent sending messages to a closed stream
+        if self.handle.is_finished() { //prevent sending messages to a closed stream
             self.connected = false;
             return;
         }
         let _res = self.stream.write_all(&(message.len() as u32).to_be_bytes());
         let _res = self.stream.write_all(&message);
-        println!("sent message");
     }
 
     pub fn stop(&self) {
-        self.abort_handle.abort()
+        //implement
     }
 }

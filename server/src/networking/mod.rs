@@ -42,7 +42,7 @@ impl ServerNetworking {
 
         loop {
             std::thread::sleep(std::time::Duration::from_millis(10));//so we don't hog the resources or something idk
-            let data = stream_manager.get_message().unwrap_or(Vec::new());
+            let data = stream_manager.wait_for_message().unwrap();
             if !stream_manager.connected {
                 println!("client disconnected");
                 //clear the querries vec
