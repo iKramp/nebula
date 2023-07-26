@@ -40,7 +40,7 @@ impl DatabaseCommands {
 pub async fn get_new_messages(
     client: &tokio_postgres::Client,
 ) -> Result<Statement, tokio_postgres::Error> {
-    client.prepare("SELECT * FROM messages AS message WHERE message.channel_id = $1::int8 AND message.id > $2::int8").await
+    client.prepare("SELECT * FROM messages AS message WHERE message.channel_id = $1::int8 AND message.id > $2::int8 LIMIT 50").await
 }
 
 pub async fn save_message(
