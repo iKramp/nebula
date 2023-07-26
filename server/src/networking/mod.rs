@@ -50,7 +50,7 @@ impl ServerNetworking {
                 return Ok(());
             }
             if data.len() > 0 {
-                let data = kvptree::from_string(data)?;
+                let data = kvptree::from_byte_vec(data)?;
                 println!("Received message from client");
                 let request_type_id = data.get_str("request_type_id")?.parse::<u64>()?;
 
@@ -120,7 +120,7 @@ impl ServerNetworking {
                         let returned_data = res??;
                         if let QerryReturnType::Messages(vec) = returned_data {
                             let data_tree = Message::vec_to_kvp_tree(vec);
-                            let buf = kvptree::to_string(data_tree);
+                            let buf = kvptree::to_byte_vec(data_tree);
                             stream_manager.send_message(buf);
                         } else {
                             println!("error");

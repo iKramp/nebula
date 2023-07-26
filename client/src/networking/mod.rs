@@ -32,11 +32,11 @@ impl ClientNetworking {
             kvptree::ValueType::STRING("1".to_owned()),
         )]));
         self.stream_manager.send_message(
-                kvptree::to_string(data)
+                kvptree::to_byte_vec(data)
             );
         let id_message = self.stream_manager.wait_for_message().unwrap();
         println!("got message");
-        let data = kvptree::from_string(id_message).unwrap();
+        let data = kvptree::from_byte_vec(id_message).unwrap();
         data.get_str("answer.client_id")
             .unwrap()
             .parse::<u64>()
@@ -97,7 +97,7 @@ impl ClientNetworking {
                 ])),
             ),
         ]));
-        let buf = kvptree::to_string(data);
+        let buf = kvptree::to_byte_vec(data);
 
         self.stream_manager.send_message(buf);
         println!("Requesting new messages from server...");
@@ -175,7 +175,7 @@ impl ClientNetworking {
                             )])),
                         ),
                     ]));
-                    let buf = kvptree::to_string(data);
+                    let buf = kvptree::to_byte_vec(data);
                     self.stream_manager.send_message(buf);
                     println!("Sending message to server...");
                 }
