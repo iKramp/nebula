@@ -76,7 +76,7 @@ impl ServerNetworking {
                         )])),
                     ),
                         ]));
-                    stream_manager.send_message(kvptree::to_string(data));
+                    stream_manager.send_message(kvptree::to_byte_vec(data));
                 } else if request_type_id == 2 {
                     //TODO: refactor this mess and separate it more
                     let data = data.get_node("request")?;

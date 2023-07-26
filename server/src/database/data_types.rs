@@ -8,11 +8,11 @@ pub trait DbType {
     fn to_kvp_tree(&self) -> kvptree::ValueType;
     fn vec_to_kvp_tree(data: Vec<Self>) -> kvptree::ValueType
     where
-        Self: DbType
+        Self: DbType, Self: Sized
     {
         let mut root = HashMap::new();
-        for (i, element) in data.iter().ebumerate() {
-            root.insert(format!("{i}"), element.to_kvp_tree())
+        for (i, element) in data.iter().enumerate() {
+            root.insert(format!("{i}"), element.to_kvp_tree());
         }
 
         kvptree::ValueType::LIST(root)

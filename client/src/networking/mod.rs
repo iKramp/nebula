@@ -7,6 +7,7 @@ use crate::user_interface::FromNetworkingEvent::SenderInitialized;
 use crate::user_interface::{ChannelId, Message, MessageId};
 use iced::Result;
 use tokio::sync::mpsc;
+use tokio::sync::mpsc::error::TryRecvError;
 use tokio::sync::mpsc::UnboundedReceiver;
 
 pub struct ClientNetworking {
@@ -132,54 +133,54 @@ impl ClientNetworking {
     }
 
     pub async fn send_message(
-        //TODO: @bocchi rethink how this is implemented. it currently blocks the thread until a message is sent from the client.
-        // Before my change it just blocked the thread forever. Cause is awaiting to_event_reciever.recv, which blocks until there is a new message. It returns None only after the sender is dropped or something
+        //TODO: still shit implementation but at least it shouldn't block
         &mut self,
         event_sender: &mut iced::futures::channel::mpsc::Sender<FromNetworkingEvent>,
         to_event_receiver: &mut UnboundedReceiver<ToNetworkingEvent>,
     ) {
-        if let Some(message) = to_event_receiver.recv().await {
-            match message {
-                ToNetworkingEvent::MessageSent(msg, channel_id) => {
-                    //send message to yourself
-                    event_sender
-                        .try_send(FromNetworkingEvent::Message(
-                            MessageId::new(self.curr_message_id),
-                            Message {
-                                contents: msg.clone(),
-                                sender: self.id.to_string(),
-                            },
-                        ))
-                        .unwrap();
-                    event_sender
-                        .try_send(FromNetworkingEvent::MessageReceived(
-                            channel_id,
-                            MessageId::new(self.curr_message_id),
-                        ))
-                        .unwrap();
 
-                    self.curr_message_id += 1;
+            if let Ok(message) = to_event_receiver.try_recv() {
+                match message {
+                    ToNetworkingEvent::MessageSent(msg, channel_id) => {
+                        //send message to yourself
+                        event_sender
+                            .try_send(FromNetworkingEvent::Message(
+                                MessageId::new(self.curr_message_id),
+                                Message {
+                                    contents: msg.clone(),
+                                    sender: self.id.to_string(),
+                                },
+                            ))
+                            .unwrap();
+                        event_sender
+                            .try_send(FromNetworkingEvent::MessageReceived(
+                                channel_id,
+                                MessageId::new(self.curr_message_id),
+                            ))
+                            .unwrap();
 
-                    //send to server
-                    let data = kvptree::ValueType::LIST(HashMap::from([
-                        //i need to implement an easier way to do this...
-                        (
-                            "request_type_id".to_owned(),
-                            kvptree::ValueType::STRING("2".to_owned()),
-                        ),
-                        (
-                            "request".to_owned(),
-                            kvptree::ValueType::LIST(HashMap::from([(
-                                "message".to_owned(),
-                                kvptree::ValueType::STRING(msg),
-                            )])),
-                        ),
-                    ]));
-                    let buf = kvptree::to_byte_vec(data);
-                    self.stream_manager.send_message(buf);
-                    println!("Sending message to server...");
+                        self.curr_message_id += 1;
+
+                        //send to server
+                        let data = kvptree::ValueType::LIST(HashMap::from([
+                            //i need to implement an easier way to do this...
+                            (
+                                "request_type_id".to_owned(),
+                                kvptree::ValueType::STRING("2".to_owned()),
+                            ),
+                            (
+                                "request".to_owned(),
+                                kvptree::ValueType::LIST(HashMap::from([(
+                                    "message".to_owned(),
+                                    kvptree::ValueType::STRING(msg),
+                                )])),
+                            ),
+                        ]));
+                        let buf = kvptree::to_byte_vec(data);
+                        self.stream_manager.send_message(buf);
+                        println!("Sending message to server...");
+                    }
                 }
             }
-        }
     }
 }
