@@ -178,13 +178,16 @@ impl Application for NebulaApp {
         ChannelSelector::on_event(&event, &mut self.message_manager);
 
         // Propagate the event to the chat module.
-        let commands = vec![self.chat_module.on_event(
-            event,
-            self.sender.as_mut().unwrap(),
-            &self.message_manager,
-        )];
+        if let Some(sender) = &mut self.sender {
+            let commands = vec![self.chat_module.on_event(
+                event,
+                sender,
+                &self.message_manager,
+            )];
+            return Command::batch(commands)
+        }
 
-        Command::batch(commands)
+        Command::none()
     }
 
     fn view(&self) -> Element<Event> {

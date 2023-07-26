@@ -13,3 +13,4 @@ kvptree = { git = "https://github.com/iKramp/KVPTree.git"}
 iced = { version = "0.9", features = ["tokio"] }
 tokio = { version = "1.28", features = ["full"] }
 network-manager = { path = "../shared/network_manager" }
+anyhow = "1.0"

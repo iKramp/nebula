@@ -1523,6 +1523,7 @@ dependencies = [
 name = "nebula_client"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "iced",
  "kvptree",
  "network-manager",
