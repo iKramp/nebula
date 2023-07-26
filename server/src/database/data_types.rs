@@ -1,9 +1,22 @@
+use std::collections::HashMap;
 use anyhow::Result;
 
-pub trait FromDbRows {
+pub trait DbType {
     fn from_db_rows(rows: Vec<tokio_postgres::Row>) -> Result<Vec<Self>>
     where
         Self: Sized;
+    fn to_kvp_tree(&self) -> kvptree::ValueType;
+    fn vec_to_kvp_tree(data: Vec<Self>) -> kvptree::ValueType
+    where
+        Self: DbType
+    {
+        let mut root = HashMap::new();
+        for (i, element) in data.iter().ebumerate() {
+            root.insert(format!("{i}"), element.to_kvp_tree())
+        }
+
+        kvptree::ValueType::LIST(root)
+    }
 }
 
 pub struct Message {
@@ -26,7 +39,7 @@ impl Message {
     }
 }
 
-impl FromDbRows for Message {
+impl DbType for Message {
     fn from_db_rows(message_rows: Vec<tokio_postgres::Row>) -> Result<Vec<Self>> {
         let mut message_vec: Vec<Self> = Vec::new();
 
@@ -46,6 +59,17 @@ impl FromDbRows for Message {
         }
         Ok(message_vec)
     }
+
+    fn to_kvp_tree(&self) -> kvptree::ValueType {
+        let mut message_map = HashMap::new();
+        message_map.insert("id".to_owned(), kvptree::ValueType::STRING(self.id.to_string()));
+        message_map.insert("user_id".to_owned(), kvptree::ValueType::STRING(self.user_id.to_string()));
+        message_map.insert("channel_id".to_owned(), kvptree::ValueType::STRING(self.channel_id.to_string()));
+        message_map.insert("text".to_owned(), kvptree::ValueType::STRING(self.text.to_string()));
+        message_map.insert("timestamp".to_owned(), kvptree::ValueType::STRING(self.date_created.to_string()));
+
+        kvptree::ValueType::LIST(message_map)
+    }
 }
 
 pub struct Channel {
@@ -63,7 +87,7 @@ impl Channel {
     }
 }
 
-impl FromDbRows for Channel {
+impl DbType for Channel {
     fn from_db_rows(channel_rows: Vec<tokio_postgres::Row>) -> Result<Vec<Self>> {
         let mut channel_vec = Vec::new();
 
@@ -74,6 +98,10 @@ impl FromDbRows for Channel {
         }
 
         Ok(channel_vec)
+    }
+
+    fn to_kvp_tree(&self) -> kvptree::ValueType {
+        todo!()
     }
 }
 
@@ -94,7 +122,7 @@ impl User {
     }
 }
 
-impl FromDbRows for User {
+impl DbType for User {
     fn from_db_rows(user_rows: Vec<tokio_postgres::Row>) -> Result<Vec<Self>> {
         let mut user_vec = Vec::new();
 
@@ -106,5 +134,9 @@ impl FromDbRows for User {
         }
 
         Ok(user_vec)
+    }
+
+    fn to_kvp_tree(&self) -> kvptree::ValueType {
+        todo!()
     }
 }

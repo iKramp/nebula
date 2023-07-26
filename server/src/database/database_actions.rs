@@ -1,6 +1,6 @@
 use super::data_types;
 use super::database_commands;
-use crate::database::data_types::FromDbRows;
+use crate::database::data_types::DbType;
 use anyhow::{Ok, Result};
 
 #[allow(unused)]

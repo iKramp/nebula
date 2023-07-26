@@ -9,6 +9,7 @@ use std::collections::HashMap;
 use std::io::{Error, Read, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
 use std::thread;
+use crate::database::data_types::{DbType, Message};
 
 pub struct ServerNetworking {
     // channels: HashMap<u64, Vec<TcpStream>>,
@@ -118,18 +119,8 @@ impl ServerNetworking {
                         //return messages
                         let returned_data = res??;
                         if let QerryReturnType::Messages(vec) = returned_data {
-                            let mut buf = Vec::new();
-                            buf.push(3);
-                            for message in vec {
-                                let mut temp_buf: Vec<u8> = Vec::new();
-                                temp_buf.append(&mut message.id.to_be_bytes().to_vec());
-                                temp_buf.append(&mut message.channel_id.to_be_bytes().to_vec());
-                                temp_buf.append(&mut message.text.as_bytes().to_vec());
-
-                                buf.append(&mut temp_buf.len().to_be_bytes().to_vec());
-                                buf.append(&mut temp_buf);
-                            }
-
+                            let data_tree = Message::vec_to_kvp_tree(vec);
+                            let buf = kvptree::to_string(data_tree);
                             stream_manager.send_message(buf);
                         } else {
                             println!("error");
